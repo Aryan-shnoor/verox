@@ -1,6 +1,4 @@
 
-BEGIN;
-
 
 CREATE TABLE document_approval_attempts (
     id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -82,4 +80,3 @@ ON document_approval_stages(attempt_id, status);
 CREATE INDEX idx_approval_history_attempt_time
 ON approval_history(attempt_id, created_at);
 
-COMMIT;

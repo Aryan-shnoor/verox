@@ -1,6 +1,4 @@
 
-BEGIN;
-
 CREATE TABLE users (
     id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     full_name VARCHAR(120) NOT NULL,
@@ -127,6 +125,6 @@ CREATE INDEX idx_approval_stages_reviewer_status
 CREATE INDEX idx_approval_history_document_time
     ON approval_history(document_id, created_at);
 
-COMMIT;
+
 
 
