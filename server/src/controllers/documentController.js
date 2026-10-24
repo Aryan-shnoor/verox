@@ -1,6 +1,6 @@
 const documentService = require("../services/documentService");
 
-const VALID_STATUSES = [
+const STATUSES = [
   "DRAFT",
   "PENDING_REVIEW",
   "CHANGES_REQUESTED",
@@ -9,265 +9,136 @@ const VALID_STATUSES = [
 ];
 
 function parseId(value) {
-  if (!/^[1-9]\d*$/.test(String(value ?? ""))) {
-    return null;
-  }
-
   const id = Number(value);
-  return Number.isSafeInteger(id) ? id : null;
+  return Number.isInteger(id) && id > 0 ? id : null;
 }
 
-function handleError(res, error) {
-  console.error("Document API error:", error.message);
-
-  if (error.code === "23503") {
-    return res.status(400).json({
-      success: false,
-      message: "The selected user or workflow does not exist.",
-    });
+// returns an error message, or null if the fields are fine
+function checkFields({ title, category, description, workflowId }, partial) {
+  if (!partial || title !== undefined) {
+    if (
+      typeof title !== "string" ||
+      !title.trim() ||
+      title.trim().length > 200
+    ) {
+      return "Title is required and must be 200 characters or fewer.";
+    }
   }
-
-  if (error.code === "23514" || error.code === "23502") {
-    return res.status(400).json({
-      success: false,
-      message: "The document data violates a database constraint.",
-    });
+  if (!partial || category !== undefined) {
+    if (
+      typeof category !== "string" ||
+      !category.trim() ||
+      category.trim().length > 100
+    ) {
+      return "Category is required and must be 100 characters or fewer.";
+    }
   }
-
-  return res.status(500).json({
-    success: false,
-    message: "An unexpected server error occurred.",
-  });
+  if (description != null && typeof description !== "string") {
+    return "Description must be text.";
+  }
+  if (workflowId != null && workflowId !== "" && !parseId(workflowId)) {
+    return "workflowId must be a positive integer.";
+  }
+  return null;
 }
 
-// TEMPORARY local-development identity.
-// Replace with req.user.id after authentication is implemented.
-// Never trust a client-supplied owner ID in production.
-function getTemporaryOwnerId(req) {
-  return parseId(req.body?.ownerId ?? req.query?.ownerId);
+// temporary until login exists, then this becomes req.user.id
+function getOwnerId(req) {
+  return parseId(req.body?.ownerId ?? req.query.ownerId);
 }
 
-async function createDocument(req, res) {
-  const { title, category, description, workflowId } = req.body;
-  const ownerId = getTemporaryOwnerId(req);
+async function createDocument(req, res, next) {
+  const body = req.body || {};
 
-  if (typeof title !== "string" || !title.trim() || title.trim().length > 200) {
-    return res.status(400).json({
-      success: false,
-      message: "Title is required and must be 200 characters or fewer.",
-    });
-  }
+  const problem = checkFields(body, false);
+  if (problem) return res.status(400).json({ message: problem });
 
-  if (
-    typeof category !== "string" ||
-    !category.trim() ||
-    category.trim().length > 100
-  ) {
-    return res.status(400).json({
-      success: false,
-      message: "A valid category is required.",
-    });
-  }
-
+  const ownerId = getOwnerId(req);
   if (!ownerId) {
-    return res.status(400).json({
-      success: false,
-      message: "A valid ownerId is required for local testing.",
-    });
-  }
-
-  if (
-    description !== undefined &&
-    description !== null &&
-    typeof description !== "string"
-  ) {
-    return res.status(400).json({
-      success: false,
-      message: "Description must be text.",
-    });
-  }
-
-  const parsedWorkflowId =
-    workflowId === undefined || workflowId === null || workflowId === ""
-      ? null
-      : parseId(workflowId);
-
-  if (workflowId && !parsedWorkflowId) {
-    return res.status(400).json({
-      success: false,
-      message: "workflowId must be a positive integer.",
-    });
+    return res
+      .status(400)
+      .json({ message: "ownerId is required until login is added." });
   }
 
   try {
     const document = await documentService.createDocument({
-      title: title.trim(),
-      category: category.trim(),
-      description,
+      title: body.title.trim(),
+      category: body.category.trim(),
+      description: body.description,
       ownerId,
-      workflowId: parsedWorkflowId,
+      workflowId: body.workflowId ? parseId(body.workflowId) : null,
     });
-
-    return res.status(201).json({
-      success: true,
-      message: "Document draft created successfully.",
-      data: document,
-    });
-  } catch (error) {
-    return handleError(res, error);
+    res.status(201).json(document);
+  } catch (err) {
+    next(err);
   }
 }
 
-async function listDocuments(req, res) {
+async function listDocuments(req, res, next) {
   const { status, search } = req.query;
-  const ownerId = getTemporaryOwnerId(req);
 
-  if (status && !VALID_STATUSES.includes(status)) {
-    return res.status(400).json({
-      success: false,
-      message: "Invalid document status.",
-    });
+  if (status && !STATUSES.includes(status)) {
+    return res.status(400).json({ message: "Invalid document status." });
   }
-
   if (search !== undefined && typeof search !== "string") {
-    return res.status(400).json({
-      success: false,
-      message: "Search must be text.",
-    });
+    return res.status(400).json({ message: "Search must be text." });
   }
 
   try {
     const documents = await documentService.listDocuments({
-      ownerId,
+      ownerId: getOwnerId(req),
       status,
       search,
     });
-
-    return res.status(200).json({
-      success: true,
-      count: documents.length,
-      data: documents,
-    });
-  } catch (error) {
-    return handleError(res, error);
+    res.json(documents);
+  } catch (err) {
+    next(err);
   }
 }
 
-async function getDocument(req, res) {
+async function getDocument(req, res, next) {
   const id = parseId(req.params.id);
-
-  if (!id) {
-    return res.status(400).json({
-      success: false,
-      message: "Invalid document ID.",
-    });
-  }
+  if (!id) return res.status(400).json({ message: "Invalid document ID." });
 
   try {
     const document = await documentService.getDocumentById(id);
-
-    if (!document) {
-      return res.status(404).json({
-        success: false,
-        message: "Document not found.",
-      });
-    }
-
-    return res.status(200).json({
-      success: true,
-      data: document,
-    });
-  } catch (error) {
-    return handleError(res, error);
+    if (!document)
+      return res.status(404).json({ message: "Document not found." });
+    res.json(document);
+  } catch (err) {
+    next(err);
   }
 }
 
-async function updateDocument(req, res) {
+async function updateDocument(req, res, next) {
   const id = parseId(req.params.id);
+  if (!id) return res.status(400).json({ message: "Invalid document ID." });
 
-  if (!id) {
-    return res.status(400).json({
-      success: false,
-      message: "Invalid document ID.",
-    });
+  const body = req.body || {};
+  if (Object.keys(body).length === 0) {
+    return res
+      .status(400)
+      .json({ message: "Send at least one field to update." });
   }
 
-  const { title, category, description, workflowId } = req.body;
-
-  if (Object.keys(req.body).length === 0) {
-    return res.status(400).json({
-      success: false,
-      message: "Provide at least one field to update.",
-    });
-  }
-
-  if (
-    title !== undefined &&
-    (typeof title !== "string" || !title.trim() || title.trim().length > 200)
-  ) {
-    return res.status(400).json({
-      success: false,
-      message: "Title must be non-empty text of at most 200 characters.",
-    });
-  }
-
-  if (
-    category !== undefined &&
-    (typeof category !== "string" ||
-      !category.trim() ||
-      category.trim().length > 100)
-  ) {
-    return res.status(400).json({
-      success: false,
-      message: "Category must be non-empty text of at most 100 characters.",
-    });
-  }
-
-  if (
-    description !== undefined &&
-    description !== null &&
-    typeof description !== "string"
-  ) {
-    return res.status(400).json({
-      success: false,
-      message: "Description must be text or null.",
-    });
-  }
-
-  const parsedWorkflowId =
-    workflowId === undefined || workflowId === null || workflowId === ""
-      ? null
-      : parseId(workflowId);
-
-  if (workflowId && !parsedWorkflowId) {
-    return res.status(400).json({
-      success: false,
-      message: "workflowId must be a positive integer.",
-    });
-  }
+  const problem = checkFields(body, true);
+  if (problem) return res.status(400).json({ message: problem });
 
   try {
-    const document = await documentService.updateDraft(id, {
-      title: title === undefined ? undefined : title.trim(),
-      category: category === undefined ? undefined : category.trim(),
-      description,
-      workflowId: parsedWorkflowId,
+    const document = await documentService.updateDocument(id, {
+      title: body.title?.trim(),
+      category: body.category?.trim(),
+      description: body.description,
+      workflowId: body.workflowId ? parseId(body.workflowId) : undefined,
     });
-
     if (!document) {
-      return res.status(404).json({
-        success: false,
-        message: "Draft not found or document is no longer editable.",
-      });
+      return res
+        .status(404)
+        .json({ message: "Document not found or can't be edited right now." });
     }
-
-    return res.status(200).json({
-      success: true,
-      message: "Draft updated successfully.",
-      data: document,
-    });
-  } catch (error) {
-    return handleError(res, error);
+    res.json(document);
+  } catch (err) {
+    next(err);
   }
 }
 
