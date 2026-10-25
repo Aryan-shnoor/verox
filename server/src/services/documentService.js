@@ -3,6 +3,19 @@ const pool = require("../config/database");
 const COLUMNS = `id, title, category, description, owner_id, workflow_id,
   status, current_stage_order, current_attempt_id, created_at, updated_at`;
 
+// SQL condition for "this user may see this document".
+// It adds the user id to values and uses its placeholder.
+function visibleTo(user, values) {
+  if (user.role === "ADMIN") return "TRUE";
+
+  values.push(user.id);
+  const n = values.length;
+  return `(d.owner_id = $${n} OR EXISTS (
+    SELECT 1 FROM document_approval_stages s
+    WHERE s.document_id = d.id AND s.reviewer_id = $${n}
+  ))`;
+}
+
 async function createDocument({
   title,
   category,
@@ -19,55 +32,69 @@ async function createDocument({
   return rows[0];
 }
 
-async function listDocuments({ ownerId, status, search }) {
-  const conditions = [];
+async function listDocuments({ user, status, category, search }) {
   const values = [];
+  const conditions = [visibleTo(user, values)];
 
-  if (ownerId) {
-    values.push(ownerId);
-    conditions.push(`owner_id = $${values.length}`);
-  }
   if (status) {
     values.push(status);
-    conditions.push(`status = $${values.length}`);
+    conditions.push(`d.status = $${values.length}`);
+  }
+  if (category) {
+    values.push(category);
+    conditions.push(`d.category = $${values.length}`);
   }
   if (search) {
     values.push(`%${search}%`);
-    conditions.push(`title ILIKE $${values.length}`);
+    conditions.push(
+      `(d.title ILIKE $${values.length} OR d.description ILIKE $${values.length})`,
+    );
   }
 
-  const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
-
   const { rows } = await pool.query(
-    `SELECT ${COLUMNS} FROM documents ${where} ORDER BY created_at DESC, id DESC`,
+    `SELECT d.*, u.full_name AS owner_name
+     FROM documents d
+     JOIN users u ON u.id = d.owner_id
+     WHERE ${conditions.join(" AND ")}
+     ORDER BY d.created_at DESC, d.id DESC`,
     values,
   );
   return rows;
 }
 
-async function getDocumentById(id) {
+async function getDocumentById(id, user) {
+  const values = [id];
+  const allowed = visibleTo(user, values);
+
   const { rows } = await pool.query(
-    `SELECT ${COLUMNS} FROM documents WHERE id = $1`,
-    [id],
+    `SELECT d.*, u.full_name AS owner_name
+     FROM documents d
+     JOIN users u ON u.id = d.owner_id
+     WHERE d.id = $1 AND ${allowed}`,
+    values,
   );
   return rows[0] || null;
 }
 
 async function updateDocument(
   id,
+  ownerId,
   { title, category, description, workflowId },
 ) {
   const { rows } = await pool.query(
     `UPDATE documents
-     SET title = COALESCE($2, title),
-         category = COALESCE($3, category),
-         description = COALESCE($4, description),
-         workflow_id = COALESCE($5, workflow_id),
+     SET title = COALESCE($3, title),
+         category = COALESCE($4, category),
+         description = COALESCE($5, description),
+         workflow_id = COALESCE($6, workflow_id),
          updated_at = NOW()
-     WHERE id = $1 AND status IN ('DRAFT', 'CHANGES_REQUESTED')
+     WHERE id = $1
+       AND owner_id = $2
+       AND status IN ('DRAFT', 'CHANGES_REQUESTED')
      RETURNING ${COLUMNS}`,
     [
       id,
+      ownerId,
       title ?? null,
       category ?? null,
       description ?? null,

@@ -42,30 +42,18 @@ function checkFields({ title, category, description, workflowId }, partial) {
   return null;
 }
 
-// temporary until login exists, then this becomes req.user.id
-function getOwnerId(req) {
-  return parseId(req.body?.ownerId ?? req.query.ownerId);
-}
-
 async function createDocument(req, res, next) {
   const body = req.body || {};
 
   const problem = checkFields(body, false);
   if (problem) return res.status(400).json({ message: problem });
 
-  const ownerId = getOwnerId(req);
-  if (!ownerId) {
-    return res
-      .status(400)
-      .json({ message: "ownerId is required until login is added." });
-  }
-
   try {
     const document = await documentService.createDocument({
       title: body.title.trim(),
       category: body.category.trim(),
       description: body.description,
-      ownerId,
+      ownerId: req.user.id,
       workflowId: body.workflowId ? parseId(body.workflowId) : null,
     });
     res.status(201).json(document);
@@ -75,19 +63,25 @@ async function createDocument(req, res, next) {
 }
 
 async function listDocuments(req, res, next) {
-  const { status, search } = req.query;
+  const { status, category, search } = req.query;
 
   if (status && !STATUSES.includes(status)) {
     return res.status(400).json({ message: "Invalid document status." });
   }
-  if (search !== undefined && typeof search !== "string") {
-    return res.status(400).json({ message: "Search must be text." });
+  if (
+    (category !== undefined && typeof category !== "string") ||
+    (search !== undefined && typeof search !== "string")
+  ) {
+    return res
+      .status(400)
+      .json({ message: "Category and search must be text." });
   }
 
   try {
     const documents = await documentService.listDocuments({
-      ownerId: getOwnerId(req),
+      user: req.user,
       status,
+      category,
       search,
     });
     res.json(documents);
@@ -101,7 +95,7 @@ async function getDocument(req, res, next) {
   if (!id) return res.status(400).json({ message: "Invalid document ID." });
 
   try {
-    const document = await documentService.getDocumentById(id);
+    const document = await documentService.getDocumentById(id, req.user);
     if (!document)
       return res.status(404).json({ message: "Document not found." });
     res.json(document);
@@ -125,7 +119,7 @@ async function updateDocument(req, res, next) {
   if (problem) return res.status(400).json({ message: problem });
 
   try {
-    const document = await documentService.updateDocument(id, {
+    const document = await documentService.updateDocument(id, req.user.id, {
       title: body.title?.trim(),
       category: body.category?.trim(),
       description: body.description,
@@ -134,7 +128,9 @@ async function updateDocument(req, res, next) {
     if (!document) {
       return res
         .status(404)
-        .json({ message: "Document not found or can't be edited right now." });
+        .json({
+          message: "Document not found, or you can't edit it right now.",
+        });
     }
     res.json(document);
   } catch (err) {

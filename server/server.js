@@ -1,8 +1,13 @@
-require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const pool = require("./src/config/database");
 const documentRoutes = require("./src/routes/documentRoutes");
+const authRoutes = require("./src/routes/authRoutes");
+require("dotenv").config();
+
+   if (!process.env.JWT_SECRET) {
+     throw new Error("JWT_SECRET is missing from .env");
+   }
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -23,6 +28,7 @@ app.get("/api/health/db", async (req, res, next) => {
   }
 });
 
+app.use("/api/auth", authRoutes);
 app.use("/api/documents", documentRoutes);
 
 app.use((req, res) => {

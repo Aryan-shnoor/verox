@@ -5,8 +5,11 @@ const {
   getDocument,
   updateDocument,
 } = require("../controllers/documentController");
+const { requireAuth } = require("../middleware/auth");
 
 const router = express.Router();
+
+router.use(requireAuth);
 
 router.post("/", createDocument);
 router.get("/", listDocuments);
