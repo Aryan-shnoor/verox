@@ -1,4 +1,5 @@
 const documentService = require("../services/documentService");
+const parseId = require("../utils/parseId");
 
 const STATUSES = [
   "DRAFT",
@@ -8,10 +9,10 @@ const STATUSES = [
   "REJECTED",
 ];
 
-function parseId(value) {
-  const id = Number(value);
-  return Number.isInteger(id) && id > 0 ? id : null;
-}
+// function parseId(value) {
+//   const id = Number(value);
+//   return Number.isInteger(id) && id > 0 ? id : null;
+// }
 
 // returns an error message, or null if the fields are fine
 function checkFields({ title, category, description, workflowId }, partial) {
