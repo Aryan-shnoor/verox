@@ -23,13 +23,32 @@ async function createDocument({
   ownerId,
   workflowId,
 }) {
-  const { rows } = await pool.query(
-    `INSERT INTO documents (title, category, description, owner_id, workflow_id)
-     VALUES ($1, $2, $3, $4, $5)
-     RETURNING ${COLUMNS}`,
-    [title, category, description || null, ownerId, workflowId],
-  );
-  return rows[0];
+  const client = await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    const { rows } = await client.query(
+      `INSERT INTO documents (title, category, description, owner_id, workflow_id)
+       VALUES ($1, $2, $3, $4, $5)
+       RETURNING ${COLUMNS}`,
+      [title, category, description || null, ownerId, workflowId],
+    );
+
+    await client.query(
+      `INSERT INTO approval_history (document_id, actor_id, action)
+       VALUES ($1, $2, 'CREATED')`,
+      [rows[0].id, ownerId],
+    );
+
+    await client.query("COMMIT");
+    return rows[0];
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
+  }
 }
 
 async function listDocuments({ user, status, category, search }) {

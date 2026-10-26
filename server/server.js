@@ -1,9 +1,11 @@
+require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const pool = require("./src/config/database");
 const documentRoutes = require("./src/routes/documentRoutes");
 const authRoutes = require("./src/routes/authRoutes");
-require("dotenv").config();
+const workflowRoutes = require("./src/routes/workflowRoutes");
+const reviewRoutes = require("./src/routes/reviewRoutes");
 
    if (!process.env.JWT_SECRET) {
      throw new Error("JWT_SECRET is missing from .env");
@@ -28,14 +30,21 @@ app.get("/api/health/db", async (req, res, next) => {
   }
 });
 
+//Routes 
 app.use("/api/auth", authRoutes);
 app.use("/api/documents", documentRoutes);
+app.use("/api/workflows", workflowRoutes);
+app.use("/api/reviews", reviewRoutes);
 
 app.use((req, res) => {
   res.status(404).json({ message: "Route not found." });
 });
 
+//error handler
 app.use((err, req, res, next) => {
+   if (err.status) {
+     return res.status(err.status).json({ message: err.message });
+   }
   if (err.type === "entity.parse.failed") {
     return res.status(400).json({ message: "Request body is not valid JSON." });
   }
