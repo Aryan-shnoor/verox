@@ -6,6 +6,7 @@ const documentRoutes = require("./src/routes/documentRoutes");
 const authRoutes = require("./src/routes/authRoutes");
 const workflowRoutes = require("./src/routes/workflowRoutes");
 const reviewRoutes = require("./src/routes/reviewRoutes");
+const reportRoutes = require("./src/routes/reportRoutes");
 
 if (!process.env.DATABASE_URL) {
   throw new Error("DATABASE_URL is missing from .env");
@@ -37,6 +38,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/documents", documentRoutes);
 app.use("/api/workflows", workflowRoutes);
 app.use("/api/reviews", reviewRoutes);
+app.use("/api/reports", reportRoutes);
 
 app.use((req, res) => {
   res.status(404).json({ message: "Route not found." });

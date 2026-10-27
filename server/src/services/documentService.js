@@ -3,6 +3,20 @@ const pool = require("../config/database");
 const COLUMNS = `id, title, category, description, owner_id, workflow_id,
   status, current_stage_order, current_attempt_id, created_at, updated_at`;
 
+// a document with its owner and whoever it is currently waiting on
+const SELECT_DOCUMENT = `
+  SELECT d.*,
+         u.full_name AS owner_name,
+         cr.full_name AS current_reviewer_name,
+         cw.stage_name AS current_stage_name
+  FROM documents d
+  JOIN users u ON u.id = d.owner_id
+  LEFT JOIN document_approval_stages cs
+    ON cs.attempt_id = d.current_attempt_id
+   AND cs.stage_order = d.current_stage_order
+  LEFT JOIN users cr ON cr.id = cs.reviewer_id
+  LEFT JOIN workflow_stages cw ON cw.id = cs.workflow_stage_id`;
+
 // SQL condition for "this user may see this document".
 // It adds the user id to values and uses its placeholder.
 function visibleTo(user, values) {
@@ -71,9 +85,7 @@ async function listDocuments({ user, status, category, search }) {
   }
 
   const { rows } = await pool.query(
-    `SELECT d.*, u.full_name AS owner_name
-     FROM documents d
-     JOIN users u ON u.id = d.owner_id
+    `${SELECT_DOCUMENT}
      WHERE ${conditions.join(" AND ")}
      ORDER BY d.created_at DESC, d.id DESC`,
     values,
@@ -86,9 +98,7 @@ async function getDocumentById(id, user) {
   const allowed = visibleTo(user, values);
 
   const { rows } = await pool.query(
-    `SELECT d.*, u.full_name AS owner_name
-     FROM documents d
-     JOIN users u ON u.id = d.owner_id
+    `${SELECT_DOCUMENT}
      WHERE d.id = $1 AND ${allowed}`,
     values,
   );
@@ -123,9 +133,35 @@ async function updateDocument(
   return rows[0] || null;
 }
 
+// how many visible documents are in each status
+async function countByStatus(user) {
+  const values = [];
+  const allowed = visibleTo(user, values);
+
+  const { rows } = await pool.query(
+    `SELECT d.status, COUNT(*) AS total
+     FROM documents d
+     WHERE ${allowed}
+     GROUP BY d.status`,
+    values,
+  );
+
+  const counts = {
+    DRAFT: 0,
+    PENDING_REVIEW: 0,
+    CHANGES_REQUESTED: 0,
+    APPROVED: 0,
+    REJECTED: 0,
+  };
+  for (const row of rows) counts[row.status] = row.total;
+  counts.total = Object.values(counts).reduce((sum, n) => sum + n, 0);
+  return counts;
+}
+
 module.exports = {
   createDocument,
   listDocuments,
   getDocumentById,
   updateDocument,
+  countByStatus,
 };

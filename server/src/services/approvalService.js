@@ -322,10 +322,25 @@ async function listReviewHistory(userId) {
   return rows;
 }
 
+// for the admin dashboard: how many decisions each reviewer has waiting
+async function pendingByReviewer() {
+  const { rows } = await pool.query(
+    `SELECT u.id, u.full_name, COUNT(*) AS pending
+     FROM document_approval_stages s
+     JOIN documents d ON d.id = s.document_id AND d.current_attempt_id = s.attempt_id
+     JOIN users u ON u.id = s.reviewer_id
+     WHERE s.status = 'PENDING' AND d.status = 'PENDING_REVIEW'
+     GROUP BY u.id, u.full_name
+     ORDER BY pending DESC, u.full_name`
+  );
+  return rows;
+}
+
 module.exports = {
   submitDocument,
   getApproval,
   decide,
   listPending,
   listReviewHistory,
+  pendingByReviewer,
 };
