@@ -73,6 +73,11 @@ async function submitDocument(documentId, user, comment) {
     );
     const revisionId = revisionResult.rows[0].id;
 
+        await client.query(
+          "UPDATE document_attachments SET revision_id = $2 WHERE document_id = $1 AND revision_id IS NULL",
+          [doc.id, revisionId],
+        );
+
     const numberResult = await client.query(
       "SELECT COALESCE(MAX(attempt_number), 0) AS last FROM document_approval_attempts WHERE document_id = $1",
       [doc.id],

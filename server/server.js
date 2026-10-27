@@ -7,9 +7,12 @@ const authRoutes = require("./src/routes/authRoutes");
 const workflowRoutes = require("./src/routes/workflowRoutes");
 const reviewRoutes = require("./src/routes/reviewRoutes");
 
-   if (!process.env.JWT_SECRET) {
-     throw new Error("JWT_SECRET is missing from .env");
-   }
+if (!process.env.DATABASE_URL) {
+  throw new Error("DATABASE_URL is missing from .env");
+}
+if (!process.env.JWT_SECRET) {
+  throw new Error("JWT_SECRET is missing from .env");
+}
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -30,7 +33,6 @@ app.get("/api/health/db", async (req, res, next) => {
   }
 });
 
-//Routes 
 app.use("/api/auth", authRoutes);
 app.use("/api/documents", documentRoutes);
 app.use("/api/workflows", workflowRoutes);
@@ -40,11 +42,20 @@ app.use((req, res) => {
   res.status(404).json({ message: "Route not found." });
 });
 
-//error handler
 app.use((err, req, res, next) => {
-   if (err.status) {
-     return res.status(err.status).json({ message: err.message });
-   }
+  if (err.code === "LIMIT_FILE_SIZE") {
+    return res
+      .status(400)
+      .json({ message: "File is too large. The limit is 5 MB." });
+  }
+  if (err.name === "MulterError") {
+    return res
+      .status(400)
+      .json({ message: "Upload one file in the form field named 'file'." });
+  }
+  if (err.status) {
+    return res.status(err.status).json({ message: err.message });
+  }
   if (err.type === "entity.parse.failed") {
     return res.status(400).json({ message: "Request body is not valid JSON." });
   }
