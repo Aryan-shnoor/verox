@@ -1,20 +1,14 @@
 import { useAuth } from "../authContext.js";
 
 export default function DashboardPage() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
 
   return (
-    <div className="p-6">
+    <div>
       <h1 className="text-xl font-semibold text-navy-900">Dashboard</h1>
-      <p className="mt-2 text-sm text-gray-600">
-        {user.full_name} ({user.role})
+      <p className="mt-1 text-sm text-gray-600">
+        Signed in as {user.full_name}
       </p>
-      <button
-        onClick={logout}
-        className="mt-4 rounded border border-gray-300 bg-white px-3 py-1.5 text-sm hover:bg-gray-50"
-      >
-        Log out
-      </button>
     </div>
   );
 }

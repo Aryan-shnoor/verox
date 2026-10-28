@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { Navigate } from "react-router-dom";
+// import { Navigate } from "react-router-dom";
 import { useAuth } from "../authContext.js";
+import { Link, Navigate } from "react-router-dom";
 
 export default function LoginPage() {
   const { user, login } = useAuth();
@@ -69,6 +70,14 @@ export default function LoginPage() {
         >
           {loading ? "Signing in..." : "Sign in"}
         </button>
+
+        <p className="mt-4 text-center text-sm text-gray-600">
+          No account?{" "}
+          <Link to="/register" className="text-navy-700 underline">
+            Register
+          </Link>
+        </p>
+
       </form>
     </div>
   );
