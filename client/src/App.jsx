@@ -1,15 +1,11 @@
-function App() {
+export default function App() {
   return (
-    <main className="min-h-screen bg-slate-950 text-white flex flex-col items-center justify-center gap-4 p-6">
-      <h1 className="text-4xl font-bold">Verox</h1>
-      <p className="text-slate-300 text-center">
-        Document Approval & Workflow Management
-      </p>
-      <span className="rounded-full bg-blue-500/15 px-4 py-2 text-sm text-blue-300">
-        Frontend setup complete
-      </span>
-    </main>
+    <div className="p-6">
+      <h1 className="text-2xl font-semibold text-navy-900">Verox</h1>
+      <p className="mt-2 text-gray-600">Frontend setup is working.</p>
+      <button className="mt-4 rounded bg-navy-700 px-4 py-2 text-white hover:bg-navy-900" onClick={() => alert("Button clicked!")}>
+        Test button
+      </button>
+    </div>
   );
 }
-
-export default App;
