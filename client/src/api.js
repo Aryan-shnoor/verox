@@ -45,3 +45,50 @@ export function register(fullName, email, password) {
     body: { fullName, email, password },
   });
 }
+
+function toQuery(params) {
+  const query = new URLSearchParams();
+  for (const [key, value] of Object.entries(params || {})) {
+    if (value) query.set(key, value);
+  }
+  const text = query.toString();
+  return text ? `?${text}` : "";
+}
+
+// fetches a file with the login token and saves it in the browser
+async function downloadFile(path, filename) {
+  const token = localStorage.getItem("token");
+
+  let res;
+  try {
+    res = await fetch(`${BASE_URL}${path}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  } catch {
+    throw new Error("Can't reach the server. Is it running?");
+  }
+
+  if (!res.ok) {
+    const data = await res.json().catch(() => null);
+    throw new Error(data?.message || "Download failed.");
+  }
+
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
+export function getDocuments(filters) {
+  return request(`/documents${toQuery(filters)}`);
+}
+
+export function downloadDocumentsCsv(filters) {
+  return downloadFile(
+    `/reports/documents${toQuery(filters)}`,
+    "verox-documents.csv",
+  );
+}
