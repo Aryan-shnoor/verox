@@ -83,9 +83,10 @@ export default function DocumentFormPage() {
     if (form.workflowId) data.workflowId = Number(form.workflowId);
 
     try {
-      if (isEdit) await updateDocument(id, data);
-      else await createDocument(data);
-      navigate("/documents");
+            const saved = isEdit
+              ? await updateDocument(id, data)
+              : await createDocument(data);
+            navigate(`/documents/${saved.id}`);
     } catch (err) {
       setError(err.message);
       setSaving(false);
@@ -206,7 +207,7 @@ export default function DocumentFormPage() {
             {saving ? "Saving..." : isEdit ? "Save changes" : "Create draft"}
           </button>
           <Link
-            to="/documents"
+            to={isEdit ? `/documents/${id}` : "/documents"}
             className="rounded border border-gray-300 bg-white px-4 py-2 text-sm hover:bg-gray-50"
           >
             Cancel

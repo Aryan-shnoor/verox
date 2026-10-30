@@ -108,3 +108,14 @@ export function updateDocument(id, data) {
 export function getWorkflows() {
   return request("/workflows");
 }
+
+export function getApproval(id) {
+  return request(`/documents/${id}/approval`);
+}
+
+export function submitDocument(id, comment) {
+  return request(`/documents/${id}/submit`, {
+    method: "POST",
+    body: { comment },
+  });
+}

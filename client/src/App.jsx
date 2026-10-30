@@ -8,6 +8,7 @@ import DashboardPage from "./pages/DashboardPage.jsx";
 import NotFoundPage from "./pages/NotFoundPage.jsx";
 import DocumentsPage from "./pages/DocumentsPage.jsx";
 import DocumentFormPage from "./pages/DocumentFormPage.jsx";
+import DocumentDetailPage from "./pages/DocumentDetailPage.jsx";
 
 export default function App() {
   return (
@@ -27,6 +28,7 @@ export default function App() {
           <Route path="/documents" element={<DocumentsPage />} />
           <Route path="/documents/new" element={<DocumentFormPage />} />
           <Route path="/documents/:id/edit" element={<DocumentFormPage />} />
+          <Route path="/documents/:id" element={<DocumentDetailPage />} />
         </Route>
 
         <Route path="*" element={<NotFoundPage />} />
