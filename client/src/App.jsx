@@ -7,6 +7,7 @@ import RegisterPage from "./pages/RegisterPage.jsx";
 import DashboardPage from "./pages/DashboardPage.jsx";
 import NotFoundPage from "./pages/NotFoundPage.jsx";
 import DocumentsPage from "./pages/DocumentsPage.jsx";
+import DocumentFormPage from "./pages/DocumentFormPage.jsx";
 
 export default function App() {
   return (
@@ -14,7 +15,6 @@ export default function App() {
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
-        <Route path="/documents" element={<DocumentsPage />} />
 
         <Route
           element={
@@ -24,6 +24,9 @@ export default function App() {
           }
         >
           <Route path="/" element={<DashboardPage />} />
+          <Route path="/documents" element={<DocumentsPage />} />
+          <Route path="/documents/new" element={<DocumentFormPage />} />
+          <Route path="/documents/:id/edit" element={<DocumentFormPage />} />
         </Route>
 
         <Route path="*" element={<NotFoundPage />} />

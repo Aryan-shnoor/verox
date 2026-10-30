@@ -92,3 +92,19 @@ export function downloadDocumentsCsv(filters) {
     "verox-documents.csv",
   );
 }
+
+export function getDocument(id) {
+  return request(`/documents/${id}`);
+}
+
+export function createDocument(data) {
+  return request("/documents", { method: "POST", body: data });
+}
+
+export function updateDocument(id, data) {
+  return request(`/documents/${id}`, { method: "PATCH", body: data });
+}
+
+export function getWorkflows() {
+  return request("/workflows");
+}
