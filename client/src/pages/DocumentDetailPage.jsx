@@ -6,6 +6,7 @@ import { formatDate } from "../format.js";
 import StatusBadge from "../components/StatusBadge.jsx";
 import ApprovalStages from "../components/ApprovalStages.jsx";
 import HistoryTimeline from "../components/HistoryTimeline.jsx";
+import Attachments from "../components/Attachments.jsx";
 
 export default function DocumentDetailPage() {
   const { id } = useParams();
@@ -158,6 +159,15 @@ export default function DocumentDetailPage() {
         <p className="mt-4 whitespace-pre-wrap border-t border-gray-100 pt-4 text-sm text-gray-700">
           {doc.description || "No description."}
         </p>
+      </div>
+
+      <h2 className={`mt-6 ${sectionTitle}`}>Attachments</h2>
+      <div className="mt-2">
+        <Attachments
+          documentId={doc.id}
+          canEdit={canEdit}
+          attemptCount={attempts.length}
+        />
       </div>
 
       {canEdit && (

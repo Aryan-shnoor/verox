@@ -119,3 +119,38 @@ export function submitDocument(id, comment) {
     body: { comment },
   });
 }
+
+export function getAttachments(id) {
+  return request(`/documents/${id}/attachments`);
+}
+
+export function uploadAttachment(id, file) {
+  const form = new FormData();
+  form.append("file", file);
+  return request(`/documents/${id}/attachments`, {
+    method: "POST",
+    body: form,
+  });
+}
+
+export function deleteAttachment(id, attachmentId) {
+  return request(`/documents/${id}/attachments/${attachmentId}`, {
+    method: "DELETE",
+  });
+}
+
+export function downloadAttachment(id, attachmentId, filename) {
+  return downloadFile(`/documents/${id}/attachments/${attachmentId}`, filename);
+}
+
+export function getSummary() {
+  return request("/reports/summary");
+}
+
+export function getPendingReviews() {
+  return request("/reviews/pending");
+}
+
+export function getReviewSummary() {
+  return request("/reviews/summary");
+}

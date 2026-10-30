@@ -1,16 +1,24 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+// import { Link } from "react-router-dom";
 import { useAuth } from "../authContext.js";
 import { getDocuments, downloadDocumentsCsv } from "../api.js";
 import { STATUS_LABELS, CATEGORIES } from "../constants.js";
 import { formatDate } from "../format.js";
 import StatusBadge from "../components/StatusBadge.jsx";
+import { Link, useSearchParams } from "react-router-dom";
 
 const emptyFilters = { search: "", status: "", category: "" };
 
 export default function DocumentsPage() {
   const { user } = useAuth();
-  const [filters, setFilters] = useState(emptyFilters);
+    const [searchParams] = useSearchParams();
+    const startStatus = searchParams.get("status");
+    const [filters, setFilters] = useState({
+      ...emptyFilters,
+      status: Object.keys(STATUS_LABELS).includes(startStatus)
+        ? startStatus
+        : "",
+    });
   const [searchText, setSearchText] = useState("");
   const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(true);
