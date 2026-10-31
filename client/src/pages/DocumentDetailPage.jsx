@@ -7,6 +7,7 @@ import StatusBadge from "../components/StatusBadge.jsx";
 import ApprovalStages from "../components/ApprovalStages.jsx";
 import HistoryTimeline from "../components/HistoryTimeline.jsx";
 import Attachments from "../components/Attachments.jsx";
+import DecisionPanel from "../components/DecisionPanel.jsx";
 
 export default function DocumentDetailPage() {
   const { id } = useParams();
@@ -86,6 +87,15 @@ export default function DocumentDetailPage() {
   const showDecision =
     lastDecision &&
     (doc.status === "CHANGES_REQUESTED" || doc.status === "REJECTED");
+
+      const currentAttempt = attempts[attempts.length - 1];
+      const myStage =
+        currentAttempt && doc.status === "PENDING_REVIEW"
+          ? currentAttempt.stages.find(
+              (s) =>
+                s.status === "PENDING" && s.reviewer_id === Number(user.id),
+            )
+          : null;
 
   const sectionTitle = "text-sm font-semibold uppercase text-gray-500";
 
@@ -169,6 +179,14 @@ export default function DocumentDetailPage() {
           attemptCount={attempts.length}
         />
       </div>
+
+      {myStage && (
+        <DecisionPanel
+          documentId={doc.id}
+          stageName={myStage.stage_name}
+          onDone={setData}
+        />
+      )}
 
       {canEdit && (
         <div className="mt-4 rounded border border-gray-200 bg-white p-4">

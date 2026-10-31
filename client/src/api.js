@@ -154,3 +154,10 @@ export function getPendingReviews() {
 export function getReviewSummary() {
   return request("/reviews/summary");
 }
+
+export function decide(id, action, comment) {
+  return request(`/documents/${id}/decision`, {
+    method: "POST",
+    body: { action, comment },
+  });
+}
