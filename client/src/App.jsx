@@ -9,6 +9,7 @@ import NotFoundPage from "./pages/NotFoundPage.jsx";
 import DocumentsPage from "./pages/DocumentsPage.jsx";
 import DocumentFormPage from "./pages/DocumentFormPage.jsx";
 import DocumentDetailPage from "./pages/DocumentDetailPage.jsx";
+import ReviewsPage from "./pages/ReviewsPage.jsx";
 
 export default function App() {
   return (
@@ -29,6 +30,14 @@ export default function App() {
           <Route path="/documents/new" element={<DocumentFormPage />} />
           <Route path="/documents/:id/edit" element={<DocumentFormPage />} />
           <Route path="/documents/:id" element={<DocumentDetailPage />} />
+          <Route
+            path="/reviews"
+            element={
+              <ProtectedRoute roles={["REVIEWER", "ADMIN"]}>
+                <ReviewsPage />
+              </ProtectedRoute>
+            }
+          />
         </Route>
 
         <Route path="*" element={<NotFoundPage />} />

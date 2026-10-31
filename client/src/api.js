@@ -161,3 +161,7 @@ export function decide(id, action, comment) {
     body: { action, comment },
   });
 }
+
+export function getReviewHistory() {
+  return request("/reviews/history");
+}
