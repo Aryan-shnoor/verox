@@ -165,3 +165,15 @@ export function decide(id, action, comment) {
 export function getReviewHistory() {
   return request("/reviews/history");
 }
+
+export function getReviewers() {
+  return request("/workflows/reviewers");
+}
+
+export function createWorkflow(data) {
+  return request("/workflows", { method: "POST", body: data });
+}
+
+export function setWorkflowActive(id, isActive) {
+  return request(`/workflows/${id}`, { method: "PATCH", body: { isActive } });
+}

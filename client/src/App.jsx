@@ -5,11 +5,12 @@ import Layout from "./components/Layout.jsx";
 import LoginPage from "./pages/LoginPage.jsx";
 import RegisterPage from "./pages/RegisterPage.jsx";
 import DashboardPage from "./pages/DashboardPage.jsx";
-import NotFoundPage from "./pages/NotFoundPage.jsx";
 import DocumentsPage from "./pages/DocumentsPage.jsx";
 import DocumentFormPage from "./pages/DocumentFormPage.jsx";
 import DocumentDetailPage from "./pages/DocumentDetailPage.jsx";
 import ReviewsPage from "./pages/ReviewsPage.jsx";
+import WorkflowsPage from "./pages/WorkflowsPage.jsx";
+import NotFoundPage from "./pages/NotFoundPage.jsx";
 
 export default function App() {
   return (
@@ -35,6 +36,14 @@ export default function App() {
             element={
               <ProtectedRoute roles={["REVIEWER", "ADMIN"]}>
                 <ReviewsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/workflows"
+            element={
+              <ProtectedRoute roles={["ADMIN"]}>
+                <WorkflowsPage />
               </ProtectedRoute>
             }
           />
