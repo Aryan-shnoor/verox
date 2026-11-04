@@ -117,7 +117,7 @@ function DocumentsList() {
           <button
             onClick={handleDownload}
             disabled={downloading}
-            className={btnSecondary}
+            className={`${btnSecondary} min-w-36`}
           >
             {downloading ? "Preparing..." : "Download CSV"}
           </button>
@@ -171,11 +171,14 @@ function DocumentsList() {
         <button type="submit" className={btnPrimary}>
           Search
         </button>
-        {hasFilters && (
-          <button type="button" onClick={clearFilters} className={btnSecondary}>
-            Clear
-          </button>
-        )}
+        <button
+          type="button"
+          onClick={clearFilters}
+          disabled={!hasFilters}
+          className={btnSecondary}
+        >
+          Clear
+        </button>
       </form>
 
       {error && (
@@ -225,7 +228,7 @@ function DocumentsList() {
       </div>
 
       {/* larger screens: table */}
-      <div className="mt-4 hidden overflow-x-auto rounded-[14px] border border-line bg-white md:block">
+      <div className="mt-4 hidden min-h-80 overflow-x-auto rounded-[14px] border border-line bg-white md:block">
         <table className="w-full text-left text-sm">
           <thead>
             <tr className="bg-page text-xs font-semibold uppercase tracking-wider text-muted">

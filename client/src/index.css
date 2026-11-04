@@ -17,3 +17,6 @@ body {
   background-color: var(--color-page);
   color: var(--color-ink);
 }
+html {
+  scrollbar-gutter: stable;
+}
