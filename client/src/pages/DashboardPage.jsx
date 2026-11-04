@@ -13,7 +13,7 @@ import StatusBadge from "../components/StatusBadge.jsx";
 
 const borderColors = {
   TOTAL: "border-navy-700",
-  DRAFT: "border-gray-300",
+  DRAFT: "border-line-strong",
   PENDING_REVIEW: "border-amber-400",
   CHANGES_REQUESTED: "border-blue-400",
   APPROVED: "border-green-500",

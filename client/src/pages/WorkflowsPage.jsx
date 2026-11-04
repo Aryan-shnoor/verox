@@ -114,7 +114,7 @@ export default function WorkflowsPage() {
   }
 
   const inputClass =
-    "mt-1 block w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm focus:border-navy-700 focus:outline-none";
+    "mt-1 block w-full rounded border border-line-strong bg-white px-3 py-2 text-sm focus:border-navy-700 focus:outline-none";
 
   return (
     <div className="max-w-5xl">
@@ -205,7 +205,7 @@ export default function WorkflowsPage() {
                   onChange={(e) =>
                     updateStage(index, { stageName: e.target.value })
                   }
-                  className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-navy-700 focus:outline-none"
+                  className="w-full rounded border border-line-strong px-3 py-2 text-sm focus:border-navy-700 focus:outline-none"
                 />
                 <select
                   required
@@ -213,7 +213,7 @@ export default function WorkflowsPage() {
                   onChange={(e) =>
                     updateStage(index, { reviewerId: e.target.value })
                   }
-                  className="w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm focus:border-navy-700 focus:outline-none"
+                  className="w-full rounded border border-line-strong bg-white px-3 py-2 text-sm focus:border-navy-700 focus:outline-none"
                 >
                   <option value="">Choose reviewer</option>
                   {reviewers.map((reviewer) => (
@@ -255,7 +255,7 @@ export default function WorkflowsPage() {
             <button
               type="button"
               onClick={closeForm}
-              className="rounded border border-gray-300 bg-white px-4 py-2 text-sm hover:bg-gray-50"
+              className="rounded border border-line-strong bg-white px-4 py-2 text-sm hover:bg-gray-50"
             >
               Cancel
             </button>

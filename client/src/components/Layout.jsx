@@ -88,7 +88,10 @@ export default function Layout() {
     <div className="min-h-screen">
       <div className="flex items-center justify-between border-b border-line bg-side px-4 py-3 md:hidden">
         <Logo />
-        <button onClick={() => setOpen(true)} className="text-sm font-medium text-muted">
+        <button
+          onClick={() => setOpen(true)}
+          className="text-sm font-medium text-muted"
+        >
           Menu
         </button>
       </div>
@@ -142,7 +145,9 @@ export default function Layout() {
       </aside>
 
       <main className="p-4 md:ml-60 md:px-9 md:py-8">
-        <Outlet />
+        <div className="mx-auto max-w-[1100px]">
+          <Outlet />
+        </div>
       </main>
     </div>
   );

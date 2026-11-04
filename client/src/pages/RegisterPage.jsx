@@ -35,7 +35,7 @@ export default function RegisterPage() {
   }
 
   const inputClass =
-    "mt-1 block w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-navy-700 focus:outline-none";
+    "mt-1 block w-full rounded border border-line-strong px-3 py-2 text-sm focus:border-navy-700 focus:outline-none";
 
   return (
     <div className="flex min-h-screen items-center justify-center px-4">

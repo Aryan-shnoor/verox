@@ -118,7 +118,7 @@ export default function DocumentFormPage() {
       : [form.category, ...CATEGORIES];
 
   const inputClass =
-    "mt-1 block w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm focus:border-navy-700 focus:outline-none";
+    "mt-1 block w-full rounded border border-line-strong bg-white px-3 py-2 text-sm focus:border-navy-700 focus:outline-none";
 
   return (
     <div className="max-w-2xl">
@@ -208,7 +208,7 @@ export default function DocumentFormPage() {
           </button>
           <Link
             to={isEdit ? `/documents/${id}` : "/documents"}
-            className="rounded border border-gray-300 bg-white px-4 py-2 text-sm hover:bg-gray-50"
+            className="rounded border border-line-strong bg-white px-4 py-2 text-sm hover:bg-gray-50"
           >
             Cancel
           </Link>

@@ -55,7 +55,7 @@ export default function DecisionPanel({ documentId, stageName, onDone }) {
         rows={3}
         maxLength={1000}
         placeholder="Comment (required to reject or request changes)"
-        className="mt-2 block w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-navy-700 focus:outline-none"
+        className="mt-2 block w-full rounded border border-line-strong px-3 py-2 text-sm focus:border-navy-700 focus:outline-none"
       />
 
       <div className="mt-3 flex flex-wrap gap-2">

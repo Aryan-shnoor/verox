@@ -7,9 +7,10 @@
   --color-accent-soft: #e8edfb;
   --color-ink: #172033;
   --color-muted: #5a6478;
-  --color-line: #e4e0d4;
-  --color-page: #f5f3ec;
-  --color-side: #fbfaf5;
+   --color-line: #e3e7ee;
+  --color-line-strong: #cdd4e0;
+  --color-page: #f4f6fa;
+  --color-side: #ffffff;
 }
 
 body {
