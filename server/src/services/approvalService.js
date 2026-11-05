@@ -323,14 +323,22 @@ async function listReviewHistory(userId) {
 }
 
 // for the admin dashboard: how many decisions each reviewer has waiting
-async function pendingByReviewer() {
+// per-person workload and decisions, for the admin dashboard
+async function reviewerStats() {
   const { rows } = await pool.query(
-    `SELECT u.id, u.full_name, COUNT(*) AS pending
-     FROM document_approval_stages s
-     JOIN documents d ON d.id = s.document_id AND d.current_attempt_id = s.attempt_id
-     JOIN users u ON u.id = s.reviewer_id
-     WHERE s.status = 'PENDING' AND d.status = 'PENDING_REVIEW'
-     GROUP BY u.id, u.full_name
+    `SELECT u.id, u.full_name,
+       (SELECT COUNT(*) FROM document_approval_stages s
+          JOIN documents d ON d.id = s.document_id AND d.current_attempt_id = s.attempt_id
+          WHERE s.reviewer_id = u.id AND s.status = 'PENDING'
+            AND d.status = 'PENDING_REVIEW') AS pending,
+       (SELECT COUNT(*) FROM approval_history h
+          WHERE h.actor_id = u.id AND h.action = 'APPROVED') AS approved,
+       (SELECT COUNT(*) FROM approval_history h
+          WHERE h.actor_id = u.id AND h.action = 'REJECTED') AS rejected,
+       (SELECT COUNT(*) FROM approval_history h
+          WHERE h.actor_id = u.id AND h.action = 'CHANGES_REQUESTED') AS changes_requested
+     FROM users u
+     WHERE u.role IN ('REVIEWER', 'ADMIN')
      ORDER BY pending DESC, u.full_name`
   );
   return rows;
@@ -342,5 +350,5 @@ module.exports = {
   decide,
   listPending,
   listReviewHistory,
-  pendingByReviewer,
+  reviewerStats,
 };

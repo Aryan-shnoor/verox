@@ -24,10 +24,13 @@ const COLUMNS = [
 
 async function summary(req, res, next) {
   try {
-    const result = { documents: await documentService.countByStatus(req.user) };
+    const result = {
+      documents: await documentService.countByStatus(req.user),
+      activity: await documentService.recentActivity(req.user, 6),
+    };
 
     if (req.user.role === "ADMIN") {
-      result.pendingByReviewer = await approvalService.pendingByReviewer();
+      result.reviewers = await approvalService.reviewerStats();
     }
     res.json(result);
   } catch (err) {

@@ -158,10 +158,31 @@ async function countByStatus(user) {
   return counts;
 }
 
+// latest history entries on documents this user may see
+async function recentActivity(user, limit) {
+  const values = [];
+  const allowed = visibleTo(user, values);
+  values.push(limit);
+
+  const { rows } = await pool.query(
+    `SELECT h.id, h.action, h.created_at, h.document_id,
+            d.title, u.full_name AS actor_name
+     FROM approval_history h
+     JOIN documents d ON d.id = h.document_id
+     JOIN users u ON u.id = h.actor_id
+     WHERE ${allowed}
+     ORDER BY h.created_at DESC, h.id DESC
+     LIMIT $${values.length}`,
+    values
+  );
+  return rows;
+}
+
 module.exports = {
   createDocument,
   listDocuments,
   getDocumentById,
   updateDocument,
   countByStatus,
+  recentActivity,
 };
