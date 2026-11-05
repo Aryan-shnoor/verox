@@ -31,6 +31,12 @@ const icons = {
       <path d="M8 7l8 4M8 17l8-4" />
     </>
   ),
+  logout: (
+    <>
+      <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+      <path d="M10 17l5-5-5-5M15 12H3" />
+    </>
+  ),
 };
 
 function Icon({ name }) {
@@ -138,8 +144,9 @@ export default function Layout() {
         </div>
         <button
           onClick={logout}
-          className="mt-3 px-2 text-left text-sm text-muted hover:text-ink"
+          className="mt-3 flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted hover:bg-red-50 hover:text-red-700 cursor-pointer"
         >
+          <Icon name="logout" />
           Log out
         </button>
       </aside>
