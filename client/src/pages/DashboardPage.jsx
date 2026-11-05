@@ -12,14 +12,14 @@ import { formatDate, formatDateTime } from "../format.js";
 import { btnPrimary, btnSecondary } from "../ui.js";
 import StatusBadge from "../components/StatusBadge.jsx";
 
-const numberColor = {
-  TOTAL: "text-ink",
-  DRAFT: "text-[#454d5c]",
-  PENDING_REVIEW: "text-amber-700",
-  CHANGES_REQUESTED: "text-orange-700",
-  APPROVED: "text-green-700",
-  REJECTED: "text-red-700",
-};
+// const numberColor = {
+//   TOTAL: "text-ink",
+//   DRAFT: "text-[#454d5c]",
+//   PENDING_REVIEW: "text-amber-700",
+//   CHANGES_REQUESTED: "text-orange-700",
+//   APPROVED: "text-green-700",
+//   REJECTED: "text-red-700",
+// };
 
 const barColor = {
   DRAFT: "bg-slate-300",
@@ -28,6 +28,8 @@ const barColor = {
   APPROVED: "bg-green-600",
   REJECTED: "bg-red-500",
 };
+
+const dotColor = { TOTAL: "bg-accent", ...barColor };
 
 const verbs = {
   CREATED: "created",
@@ -184,10 +186,11 @@ export default function DashboardPage() {
             to={card.to}
             className="rounded-[14px] border border-line bg-white p-4 hover:border-line-strong"
           >
-            <p className="text-xs text-muted">{card.label}</p>
-            <p
-              className={`mt-2 text-3xl font-bold tracking-tight ${numberColor[card.key]}`}
-            >
+            <p className="flex items-center gap-1.5 text-xs text-muted">
+              <span className={`h-2 w-2 rounded-full ${dotColor[card.key]}`} />
+              {card.label}
+            </p>
+            <p className="mt-2 text-3xl font-bold tracking-tight">
               {card.value}
             </p>
           </Link>

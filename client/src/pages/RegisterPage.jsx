@@ -2,6 +2,9 @@ import { useState } from "react";
 import { Link, Navigate } from "react-router-dom";
 import { useAuth } from "../authContext.js";
 import { register } from "../api.js";
+import { btnPrimary, authInput, authInputError } from "../ui.js";
+import AuthLayout from "../components/AuthLayout.jsx";
+import PasswordInput from "../components/PasswordInput.jsx";
 
 export default function RegisterPage() {
   const { user, login } = useAuth();
@@ -10,6 +13,7 @@ export default function RegisterPage() {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [error, setError] = useState("");
+  const [errorField, setErrorField] = useState("");
   const [loading, setLoading] = useState(false);
 
   if (user) return <Navigate to="/" replace />;
@@ -17,9 +21,10 @@ export default function RegisterPage() {
   async function handleSubmit(e) {
     e.preventDefault();
     setError("");
+    setErrorField("");
 
     if (password !== confirm) {
-      setError("Passwords don't match.");
+      setErrorField("confirm");
       return;
     }
 
@@ -29,90 +34,140 @@ export default function RegisterPage() {
       await login(email, password);
     } catch (err) {
       setError(err.message);
+      if (err.message.includes("already registered")) setErrorField("email");
     } finally {
       setLoading(false);
     }
   }
 
-  const inputClass =
-    "mt-1 block w-full rounded border border-line-strong px-3 py-2 text-sm focus:border-navy-700 focus:outline-none";
+  function clearIf(field) {
+    if (errorField === field) setErrorField("");
+  }
+
+  const labelClass = "mb-1.5 block text-[13px] font-semibold";
 
   return (
-    <div className="flex min-h-screen items-center justify-center px-4">
-      <form
-        onSubmit={handleSubmit}
-        className="w-full max-w-sm rounded border border-gray-200 bg-white p-6"
-      >
-        <h1 className="text-xl font-semibold text-navy-900">Create account</h1>
-
+    <AuthLayout
+      title="Create your account"
+      subtitle="It takes less than a minute."
+      footer={
+        <>
+          Already have an account?{" "}
+          <Link
+            to="/login"
+            className="font-semibold text-accent hover:underline"
+          >
+            Sign in
+          </Link>
+        </>
+      }
+    >
+      <form onSubmit={handleSubmit} className="space-y-[18px]">
         {error && (
-          <p className="mt-4 rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          <div
+            role="alert"
+            className="mt-4 rounded-lg bg-[#fdecea] px-3.5 py-3 text-[13px] text-[#8a1c12]"
+          >
             {error}
-          </p>
+          </div>
         )}
 
-        <label className="mt-4 block text-sm font-medium text-gray-700">
-          Full name
+        <div>
+          <label htmlFor="fullName" className={labelClass}>
+            Full name
+          </label>
           <input
+            id="fullName"
             required
+            autoFocus
+            maxLength={120}
+            autoComplete="name"
+            placeholder="Your full name"
+            disabled={loading}
             value={fullName}
             onChange={(e) => setFullName(e.target.value)}
-            className={inputClass}
+            className={authInput}
           />
-        </label>
+        </div>
 
-        <label className="mt-4 block text-sm font-medium text-gray-700">
-          Email
+        <div>
+          <label htmlFor="email" className={labelClass}>
+            Email
+          </label>
           <input
+            id="email"
             type="email"
             required
+            autoComplete="email"
+            placeholder="you@company.com"
+            disabled={loading}
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className={inputClass}
+            onChange={(e) => {
+              setEmail(e.target.value);
+              clearIf("email");
+            }}
+            className={errorField === "email" ? authInputError : authInput}
           />
-        </label>
+        </div>
 
-        <label className="mt-4 block text-sm font-medium text-gray-700">
-          Password
-          <input
-            type="password"
-            required
+        <div>
+          <label htmlFor="password" className={labelClass}>
+            Password
+          </label>
+          <PasswordInput
+            id="password"
             minLength={8}
+            autoComplete="new-password"
+            placeholder="At least 8 characters"
+            disabled={loading}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className={inputClass}
           />
-          <span className="text-xs font-normal text-gray-500">
-            At least 8 characters
-          </span>
-        </label>
+          <p className="mt-1.5 text-xs text-muted">
+            At least 8 characters. A mix of letters and numbers is better.
+          </p>
+        </div>
 
-        <label className="mt-4 block text-sm font-medium text-gray-700">
-          Confirm password
-          <input
-            type="password"
-            required
+        <div>
+          <label htmlFor="confirm" className={labelClass}>
+            Confirm password
+          </label>
+          <PasswordInput
+            id="confirm"
+            autoComplete="new-password"
+            placeholder="Repeat your password"
+            disabled={loading}
+            invalid={errorField === "confirm"}
             value={confirm}
-            onChange={(e) => setConfirm(e.target.value)}
-            className={inputClass}
+            onChange={(e) => {
+              setConfirm(e.target.value);
+              clearIf("confirm");
+            }}
           />
-        </label>
+          {errorField === "confirm" && (
+            <p className="mt-1.5 text-xs text-[#b42318]">
+              Passwords don't match.
+            </p>
+          )}
+        </div>
 
         <button
           type="submit"
           disabled={loading}
-          className="mt-6 w-full rounded bg-navy-700 py-2 text-sm font-medium text-white hover:bg-navy-900 disabled:opacity-60"
+          className={`${btnPrimary} flex h-12 w-full items-center justify-center gap-2.5`}
         >
-          {loading ? "Creating..." : "Create account"}
+          {loading && (
+            <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+          )}
+          {loading ? "Creating account" : "Create account"}
         </button>
 
-        <p className="mt-4 text-center text-sm text-gray-600">
-          Already have an account?{" "}
-          <Link to="/login" className="text-navy-700 underline">
-            Sign in
-          </Link>
-        </p>
+        {loading && (
+          <p className="text-center text-xs text-muted">
+            The first request can take a minute while the server wakes up.
+          </p>
+        )}
       </form>
-    </div>
+    </AuthLayout>
   );
 }
