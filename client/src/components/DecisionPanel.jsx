@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { decide } from "../api.js";
+import { inputClass } from "../ui.js";
 
 const questions = {
   APPROVED: "Approve this document?",
@@ -7,7 +8,10 @@ const questions = {
   REJECTED: "Reject this document? This ends the review.",
 };
 
-export default function DecisionPanel({ documentId, stageName, onDone }) {
+const buttonClass =
+  "flex-1 rounded-lg px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60 sm:flex-none";
+
+export default function DecisionPanel({ documentId, onDone }) {
   const [comment, setComment] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
@@ -34,17 +38,10 @@ export default function DecisionPanel({ documentId, stageName, onDone }) {
     }
   }
 
-  const buttonClass =
-    "rounded px-4 py-2 text-sm font-medium text-white disabled:opacity-60";
-
   return (
-    <div className="mt-4 rounded border border-gray-200 bg-white p-4">
-      <p className="text-sm font-medium text-gray-700">
-        Your decision: {stageName}
-      </p>
-
+    <div>
       {error && (
-        <p className="mt-2 rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+        <p className="mb-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
           {error}
         </p>
       )}
@@ -55,7 +52,7 @@ export default function DecisionPanel({ documentId, stageName, onDone }) {
         rows={3}
         maxLength={1000}
         placeholder="Comment (required to reject or request changes)"
-        className="mt-2 block w-full rounded border border-line-strong px-3 py-2 text-sm focus:border-navy-700 focus:outline-none"
+        className={`${inputClass} block w-full`}
       />
 
       <div className="mt-3 flex flex-wrap gap-2">
@@ -69,7 +66,7 @@ export default function DecisionPanel({ documentId, stageName, onDone }) {
         <button
           onClick={() => choose("CHANGES_REQUESTED")}
           disabled={busy}
-          className={`${buttonClass} bg-blue-700 hover:bg-blue-800`}
+          className={`${buttonClass} bg-orange-700 hover:bg-orange-800`}
         >
           Request changes
         </button>

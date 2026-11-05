@@ -1,4 +1,5 @@
 import { formatDateTime } from "../format.js";
+import { STATUS_STYLES } from "../constants.js";
 
 const labels = {
   WAITING: "Waiting",
@@ -11,19 +12,17 @@ const labels = {
 };
 
 const styles = {
-  WAITING: "bg-gray-100 text-gray-600",
+  ...STATUS_STYLES,
+  WAITING: "bg-[#eceef2] text-[#454d5c]",
   PENDING: "bg-amber-100 text-amber-800",
   IN_PROGRESS: "bg-amber-100 text-amber-800",
-  APPROVED: "bg-green-100 text-green-800",
-  REJECTED: "bg-red-100 text-red-800",
-  CHANGES_REQUESTED: "bg-blue-100 text-blue-800",
-  SKIPPED: "bg-gray-100 text-gray-500",
+  SKIPPED: "bg-[#eceef2] text-[#8a93a3]",
 };
 
 function Chip({ status }) {
   return (
     <span
-      className={`whitespace-nowrap rounded px-2 py-0.5 text-xs font-medium ${styles[status]}`}
+      className={`whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-semibold ${styles[status]}`}
     >
       {labels[status]}
     </span>
@@ -32,40 +31,53 @@ function Chip({ status }) {
 
 export default function ApprovalStages({ attempts }) {
   if (attempts.length === 0) {
-    return <p className="text-sm text-gray-500">Not submitted yet.</p>;
+    return <p className="text-sm text-muted">Not submitted yet.</p>;
   }
 
   const newestFirst = [...attempts].reverse();
 
   return (
-    <div className="space-y-4">
-      {newestFirst.map((attempt) => (
-        <div key={attempt.id} className="rounded border border-gray-200">
-          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-200 bg-gray-50 px-3 py-2 text-sm">
-            <span className="font-medium">
+    <div className="space-y-3">
+      {newestFirst.map((attempt, index) => (
+        <details
+          key={attempt.id}
+          open={index === 0}
+          className="rounded-xl border border-line"
+        >
+          <summary className="flex cursor-pointer list-none flex-wrap items-center justify-between gap-2 px-4 py-3 text-sm [&::-webkit-details-marker]:hidden">
+            <span className="font-semibold">
               Attempt {attempt.attempt_number}
-            </span>
-            <span className="text-gray-500">
-              Started {formatDateTime(attempt.started_at)}
+              <span className="ml-2 font-normal text-muted">
+                Started {formatDateTime(attempt.started_at)}
+              </span>
             </span>
             <Chip status={attempt.status} />
-          </div>
+          </summary>
 
-          <ul className="divide-y divide-gray-100">
+          <ul className="divide-y divide-line border-t border-line">
             {attempt.stages.map((stage) => (
               <li
                 key={stage.id}
-                className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 text-sm"
+                className="flex items-center justify-between gap-3 px-4 py-2.5 text-sm"
               >
-                <span>
-                  {stage.stage_order}. {stage.stage_name}{" "}
-                  <span className="text-gray-500">({stage.reviewer_name})</span>
+                <span className="flex min-w-0 items-center gap-3">
+                  <span className="flex h-6 w-6 flex-none items-center justify-center rounded-full bg-page text-xs font-semibold text-muted">
+                    {stage.stage_order}
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block truncate font-medium">
+                      {stage.stage_name}
+                    </span>
+                    <span className="text-xs text-muted">
+                      {stage.reviewer_name}
+                    </span>
+                  </span>
                 </span>
                 <Chip status={stage.status} />
               </li>
             ))}
           </ul>
-        </div>
+        </details>
       ))}
     </div>
   );

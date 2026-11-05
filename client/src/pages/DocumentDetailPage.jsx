@@ -3,11 +3,30 @@ import { Link, useParams } from "react-router-dom";
 import { useAuth } from "../authContext.js";
 import { getApproval, submitDocument } from "../api.js";
 import { formatDate } from "../format.js";
+import { btnPrimary, btnSecondary, inputClass } from "../ui.js";
 import StatusBadge from "../components/StatusBadge.jsx";
 import ApprovalStages from "../components/ApprovalStages.jsx";
 import HistoryTimeline from "../components/HistoryTimeline.jsx";
 import Attachments from "../components/Attachments.jsx";
 import DecisionPanel from "../components/DecisionPanel.jsx";
+
+function Panel({ title, children }) {
+  return (
+    <section className="rounded-[14px] border border-line bg-white">
+      <h2 className="px-5 pt-4 text-[15px] font-semibold">{title}</h2>
+      <div className="p-5 pt-3">{children}</div>
+    </section>
+  );
+}
+
+function Item({ label, className = "", children }) {
+  return (
+    <div className={className}>
+      <dt className="text-xs text-muted">{label}</dt>
+      <dd className="mt-0.5 font-medium">{children}</dd>
+    </div>
+  );
+}
 
 export default function DocumentDetailPage() {
   const { id } = useParams();
@@ -56,17 +75,17 @@ export default function DocumentDetailPage() {
     }
   }
 
-  if (loading) return <p className="text-sm text-gray-500">Loading...</p>;
+  if (loading) return <p className="text-sm text-muted">Loading...</p>;
 
   if (!data) {
     return (
       <div>
-        <p className="rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+        <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
           {error}
         </p>
         <Link
           to="/documents"
-          className="mt-3 inline-block text-sm text-navy-700 underline"
+          className="mt-3 inline-block text-sm text-accent hover:underline"
         >
           Back to documents
         </Link>
@@ -80,6 +99,7 @@ export default function DocumentDetailPage() {
   const isOwner = doc.owner_id === Number(user.id);
   const canEdit =
     isOwner && (doc.status === "DRAFT" || doc.status === "CHANGES_REQUESTED");
+  const resubmitting = doc.status === "CHANGES_REQUESTED";
 
   const lastDecision = [...history]
     .reverse()
@@ -87,153 +107,151 @@ export default function DocumentDetailPage() {
   const showDecision =
     lastDecision &&
     (doc.status === "CHANGES_REQUESTED" || doc.status === "REJECTED");
+  const rejected = lastDecision?.action === "REJECTED";
 
-      const currentAttempt = attempts[attempts.length - 1];
-      const myStage =
-        currentAttempt && doc.status === "PENDING_REVIEW"
-          ? currentAttempt.stages.find(
-              (s) =>
-                s.status === "PENDING" && s.reviewer_id === Number(user.id),
-            )
-          : null;
-
-  const sectionTitle = "text-sm font-semibold uppercase text-gray-500";
+  const currentAttempt = attempts[attempts.length - 1];
+  const myStage =
+    currentAttempt && doc.status === "PENDING_REVIEW"
+      ? currentAttempt.stages.find(
+          (s) => s.status === "PENDING" && s.reviewer_id === Number(user.id),
+        )
+      : null;
 
   return (
-    <div className="max-w-4xl">
-      <Link to="/documents" className="text-sm text-navy-700 hover:underline">
-        Back to documents
+    <div>
+      <Link to="/documents" className="text-sm text-muted hover:text-ink">
+        &larr; Documents
       </Link>
 
-      <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
-        <div className="flex flex-wrap items-center gap-3">
-          <h1 className="text-xl font-semibold text-navy-900">{doc.title}</h1>
-          <StatusBadge status={doc.status} />
+      <div className="mt-3 flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-3">
+            <h1 className="text-2xl font-bold tracking-tight">{doc.title}</h1>
+            <StatusBadge status={doc.status} />
+          </div>
+          <p className="mt-1 text-sm text-muted">
+            {doc.category} &middot; Added by {doc.owner_name}
+          </p>
         </div>
         {canEdit && (
-          <Link
-            to={`/documents/${doc.id}/edit`}
-            className="rounded border border-line-strong bg-white px-3 py-2 text-sm hover:bg-gray-50"
-          >
+          <Link to={`/documents/${doc.id}/edit`} className={btnSecondary}>
             Edit
           </Link>
         )}
       </div>
 
       {error && (
-        <p className="mt-4 rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+        <p className="mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
           {error}
         </p>
       )}
 
       {showDecision && (
-        <div className="mt-4 rounded border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-900">
-          <p className="font-medium">
+        <div
+          className={`mt-4 rounded-[14px] border px-5 py-3.5 text-sm ${
+            rejected
+              ? "border-red-200 bg-red-50 text-red-900"
+              : "border-orange-200 bg-orange-50 text-orange-900"
+          }`}
+        >
+          <p className="font-semibold">
             {lastDecision.actor_name}{" "}
-            {lastDecision.action === "REJECTED"
-              ? "rejected this document"
-              : "requested changes"}
+            {rejected ? "rejected this document" : "requested changes"}
           </p>
           <p className="mt-1 whitespace-pre-wrap">{lastDecision.comment}</p>
         </div>
       )}
 
-      <div className="mt-4 rounded border border-gray-200 bg-white p-4">
-        <dl className="grid gap-4 text-sm sm:grid-cols-2">
-          <div>
-            <dt className="text-gray-500">Category</dt>
-            <dd>{doc.category}</dd>
-          </div>
-          <div>
-            <dt className="text-gray-500">Owner</dt>
-            <dd>{doc.owner_name}</dd>
-          </div>
-          <div>
-            <dt className="text-gray-500">Created</dt>
-            <dd>{formatDate(doc.created_at)}</dd>
-          </div>
-          <div>
-            <dt className="text-gray-500">Last updated</dt>
-            <dd>{formatDate(doc.updated_at)}</dd>
-          </div>
-          <div className="sm:col-span-2">
-            <dt className="text-gray-500">Waiting on</dt>
-            <dd>
-              {doc.current_reviewer_name
-                ? `${doc.current_reviewer_name} (${doc.current_stage_name})`
-                : "-"}
-            </dd>
-          </div>
-        </dl>
+      <div className="mt-5 grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_300px]">
+        <aside className="order-first lg:order-none lg:col-start-2 lg:row-start-1">
+          <Panel title="Details">
+            <dl className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm lg:grid-cols-1">
+              <Item label="Waiting on" className="col-span-2 lg:col-span-1">
+                {doc.current_reviewer_name ? (
+                  <>
+                    {doc.current_reviewer_name}
+                    <span className="block text-xs font-normal text-muted">
+                      {doc.current_stage_name}
+                    </span>
+                  </>
+                ) : (
+                  <span className="font-normal text-muted">
+                    Not under review
+                  </span>
+                )}
+              </Item>
+              <Item label="Category">{doc.category}</Item>
+              <Item label="Owner">{doc.owner_name}</Item>
+              <Item label="Created">{formatDate(doc.created_at)}</Item>
+              <Item label="Last updated">{formatDate(doc.updated_at)}</Item>
+            </dl>
+          </Panel>
+        </aside>
 
-        <p className="mt-4 whitespace-pre-wrap border-t border-gray-100 pt-4 text-sm text-gray-700">
-          {doc.description || "No description."}
-        </p>
-      </div>
-
-      <h2 className={`mt-6 ${sectionTitle}`}>Attachments</h2>
-      <div className="mt-2">
-        <Attachments
-          documentId={doc.id}
-          canEdit={canEdit}
-          attemptCount={attempts.length}
-        />
-      </div>
-
-      {myStage && (
-        <DecisionPanel
-          documentId={doc.id}
-          stageName={myStage.stage_name}
-          onDone={setData}
-        />
-      )}
-
-      {canEdit && (
-        <div className="mt-4 rounded border border-gray-200 bg-white p-4">
-          <p className="text-sm font-medium text-gray-700">
-            {doc.status === "CHANGES_REQUESTED"
-              ? "Resubmit for review"
-              : "Submit for review"}
-          </p>
-
-          {!doc.workflow_id && (
-            <p className="mt-1 text-sm text-amber-700">
-              Choose an approval workflow before submitting. Use Edit to pick
-              one.
+        <div className="space-y-4 lg:col-start-1 lg:row-start-1">
+          <Panel title="Description">
+            <p className="whitespace-pre-wrap text-sm leading-relaxed">
+              {doc.description || (
+                <span className="text-muted">No description.</span>
+              )}
             </p>
+          </Panel>
+
+          {myStage && (
+            <Panel title={`Your decision: ${myStage.stage_name}`}>
+              <DecisionPanel documentId={doc.id} onDone={setData} />
+            </Panel>
           )}
 
-          <div className="mt-2 flex flex-col gap-2 sm:flex-row">
-            <input
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-              maxLength={1000}
-              placeholder="Note for the reviewers (optional)"
-              className="w-full rounded border border-line-strong px-3 py-2 text-sm focus:border-navy-700 focus:outline-none"
-            />
-            <button
-              onClick={handleSubmit}
-              disabled={submitting || !doc.workflow_id}
-              className="whitespace-nowrap rounded bg-navy-700 px-4 py-2 text-sm font-medium text-white hover:bg-navy-900 disabled:opacity-60"
+          {canEdit && (
+            <Panel
+              title={resubmitting ? "Resubmit for review" : "Submit for review"}
             >
-              {submitting
-                ? "Submitting..."
-                : doc.status === "CHANGES_REQUESTED"
-                  ? "Resubmit"
-                  : "Submit"}
-            </button>
-          </div>
+              {!doc.workflow_id && (
+                <p className="mb-3 text-sm text-amber-700">
+                  Choose an approval workflow before submitting. Use Edit to
+                  pick one.
+                </p>
+              )}
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <input
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                  maxLength={1000}
+                  placeholder="Note for the reviewers (optional)"
+                  className={`${inputClass} w-full`}
+                />
+                <button
+                  onClick={handleSubmit}
+                  disabled={submitting || !doc.workflow_id}
+                  className={`${btnPrimary} whitespace-nowrap`}
+                >
+                  {submitting
+                    ? "Submitting..."
+                    : resubmitting
+                      ? "Resubmit"
+                      : "Submit"}
+                </button>
+              </div>
+            </Panel>
+          )}
+
+          <Panel title="Attachments">
+            <Attachments
+              documentId={doc.id}
+              canEdit={canEdit}
+              attemptCount={attempts.length}
+            />
+          </Panel>
+
+          <Panel title="Approval stages">
+            <ApprovalStages attempts={attempts} />
+          </Panel>
+
+          <Panel title="History">
+            <HistoryTimeline history={history} />
+          </Panel>
         </div>
-      )}
-
-      <h2 className={`mt-6 ${sectionTitle}`}>Approval stages</h2>
-      <div className="mt-2">
-        <ApprovalStages attempts={attempts} />
-      </div>
-
-      <h2 className={`mt-6 ${sectionTitle}`}>History</h2>
-      <div className="mt-2 rounded border border-gray-200 bg-white p-4">
-        <HistoryTimeline history={history} />
       </div>
     </div>
   );

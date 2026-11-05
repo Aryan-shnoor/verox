@@ -6,6 +6,7 @@ import {
   downloadAttachment,
 } from "../api.js";
 import { formatDate } from "../format.js";
+import { btnSecondary } from "../ui.js";
 
 const MAX_SIZE = 5 * 1024 * 1024;
 
@@ -87,41 +88,41 @@ export default function Attachments({ documentId, canEdit, attemptCount }) {
   }
 
   return (
-    <div className="rounded border border-gray-200 bg-white p-4">
+    <div>
       {error && (
-        <p className="mb-3 rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+        <p className="mb-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
           {error}
         </p>
       )}
 
-      {loading && <p className="text-sm text-gray-500">Loading...</p>}
+      {loading && <p className="text-sm text-muted">Loading...</p>}
 
       {!loading && files.length === 0 && (
-        <p className="text-sm text-gray-500">No files attached.</p>
+        <p className="text-sm text-muted">No files attached.</p>
       )}
 
       {files.length > 0 && (
-        <ul className="divide-y divide-gray-100">
+        <ul className="divide-y divide-line">
           {files.map((file) => (
             <li
               key={file.id}
-              className="flex flex-wrap items-center justify-between gap-2 py-2 text-sm"
+              className="flex flex-wrap items-center justify-between gap-2 py-2.5 first:pt-0"
             >
-              <div>
+              <div className="min-w-0">
                 <button
                   onClick={() => handleDownload(file)}
-                  className="font-medium text-navy-700 hover:underline"
+                  className="block max-w-full truncate text-left text-sm font-semibold hover:text-accent"
                 >
                   {file.original_filename}
                 </button>
-                <p className="text-xs text-gray-500">
-                  {formatSize(file.file_size_bytes)} - {file.uploaded_by_name} -{" "}
-                  {formatDate(file.created_at)}
+                <p className="text-xs text-muted">
+                  {formatSize(file.file_size_bytes)} &middot;{" "}
+                  {file.uploaded_by_name} &middot; {formatDate(file.created_at)}
                 </p>
               </div>
 
               <div className="flex items-center gap-3">
-                <span className="text-xs text-gray-500">
+                <span className="text-xs text-muted">
                   {file.version_number
                     ? `Version ${file.version_number}`
                     : "Not submitted yet"}
@@ -129,7 +130,7 @@ export default function Attachments({ documentId, canEdit, attemptCount }) {
                 {canEdit && !file.version_number && (
                   <button
                     onClick={() => handleDelete(file)}
-                    className="text-xs text-red-700 hover:underline"
+                    className="text-xs font-medium text-red-700 hover:underline"
                   >
                     Remove
                   </button>
@@ -141,8 +142,8 @@ export default function Attachments({ documentId, canEdit, attemptCount }) {
       )}
 
       {canEdit && (
-        <div className="mt-3 flex flex-wrap items-center gap-3 border-t border-gray-100 pt-3">
-          <label className="cursor-pointer rounded bg-navy-700 px-3 py-2 text-sm text-white hover:bg-navy-900">
+        <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-line pt-4">
+          <label className={`${btnSecondary} cursor-pointer`}>
             {uploading ? "Uploading..." : "Upload file"}
             <input
               type="file"
@@ -152,7 +153,7 @@ export default function Attachments({ documentId, canEdit, attemptCount }) {
               onChange={handleUpload}
             />
           </label>
-          <span className="text-xs text-gray-500">
+          <span className="text-xs text-muted">
             PDF, Word, Excel, PNG, JPG or TXT, up to 5 MB
           </span>
         </div>
