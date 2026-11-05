@@ -6,6 +6,9 @@ import {
   setWorkflowActive,
 } from "../api.js";
 import { CATEGORIES } from "../constants.js";
+import { btnPrimary, btnSecondary, inputClass } from "../ui.js";
+
+const PAGE_SIZE = 6;
 
 function makeEmptyForm() {
   return {
@@ -19,6 +22,7 @@ function makeEmptyForm() {
 export default function WorkflowsPage() {
   const [workflows, setWorkflows] = useState([]);
   const [reviewers, setReviewers] = useState([]);
+  const [visible, setVisible] = useState(PAGE_SIZE);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [reloadKey, setReloadKey] = useState(0);
@@ -113,18 +117,21 @@ export default function WorkflowsPage() {
     }
   }
 
-  const inputClass =
-    "mt-1 block w-full rounded border border-line-strong bg-white px-3 py-2 text-sm focus:border-navy-700 focus:outline-none";
+  const labelClass = "mb-1.5 block text-[13px] font-semibold";
+  const fieldClass = `${inputClass} block w-full`;
+  const shown = workflows.slice(0, visible);
 
   return (
-    <div className="max-w-5xl">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h1 className="text-xl font-semibold text-navy-900">Workflows</h1>
+    <div>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Workflows</h1>
+          <p className="mt-1 text-sm text-muted">
+            Create approval flows and choose a reviewer for each stage.
+          </p>
+        </div>
         {!showForm && (
-          <button
-            onClick={() => setShowForm(true)}
-            className="rounded bg-navy-700 px-3 py-2 text-sm font-medium text-white hover:bg-navy-900"
-          >
+          <button onClick={() => setShowForm(true)} className={btnPrimary}>
             New workflow
           </button>
         )}
@@ -133,39 +140,42 @@ export default function WorkflowsPage() {
       {showForm && (
         <form
           onSubmit={handleCreate}
-          className="mt-4 rounded border border-gray-200 bg-white p-4 md:p-6"
+          className="mt-5 rounded-[14px] border border-line bg-white p-5 md:p-6"
         >
-          <h2 className="text-sm font-semibold uppercase text-gray-500">
-            New workflow
-          </h2>
+          <h2 className="text-[15px] font-semibold">New workflow</h2>
 
           {formError && (
-            <p className="mt-3 rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+            <p className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
               {formError}
             </p>
           )}
 
-          <div className="mt-3 grid gap-4 sm:grid-cols-2">
-            <label className="block text-sm font-medium text-gray-700">
-              Name
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            <div>
+              <label htmlFor="name" className={labelClass}>
+                Name
+              </label>
               <input
+                id="name"
                 name="name"
                 required
                 maxLength={150}
                 value={form.name}
                 onChange={handleChange}
-                className={inputClass}
+                className={fieldClass}
               />
-            </label>
-
-            <label className="block text-sm font-medium text-gray-700">
-              Category
+            </div>
+            <div>
+              <label htmlFor="category" className={labelClass}>
+                Category
+              </label>
               <select
+                id="category"
                 name="category"
                 required
                 value={form.category}
                 onChange={handleChange}
-                className={inputClass}
+                className={fieldClass}
               >
                 <option value="">Choose a category</option>
                 {CATEGORIES.map((category) => (
@@ -174,29 +184,34 @@ export default function WorkflowsPage() {
                   </option>
                 ))}
               </select>
-            </label>
+            </div>
           </div>
 
-          <label className="mt-4 block text-sm font-medium text-gray-700">
-            Description
+          <div className="mt-4">
+            <label htmlFor="description" className={labelClass}>
+              Description
+            </label>
             <input
+              id="description"
               name="description"
               value={form.description}
               onChange={handleChange}
-              className={inputClass}
+              className={fieldClass}
             />
-          </label>
+          </div>
 
-          <p className="mt-4 text-sm font-medium text-gray-700">
-            Stages (reviewed in this order)
+          <p className="mt-5 text-[13px] font-semibold">
+            Stages, reviewed in this order
           </p>
           <div className="mt-2 space-y-2">
             {form.stages.map((stage, index) => (
               <div
                 key={index}
-                className="flex flex-col gap-2 sm:flex-row sm:items-center"
+                className="flex flex-col gap-2 rounded-lg bg-page p-3 sm:flex-row sm:items-center"
               >
-                <span className="w-6 text-sm text-gray-500">{index + 1}.</span>
+                <span className="flex h-6 w-6 flex-none items-center justify-center rounded-full bg-white text-xs font-semibold text-muted">
+                  {index + 1}
+                </span>
                 <input
                   required
                   maxLength={120}
@@ -205,7 +220,7 @@ export default function WorkflowsPage() {
                   onChange={(e) =>
                     updateStage(index, { stageName: e.target.value })
                   }
-                  className="w-full rounded border border-line-strong px-3 py-2 text-sm focus:border-navy-700 focus:outline-none"
+                  className={fieldClass}
                 />
                 <select
                   required
@@ -213,7 +228,7 @@ export default function WorkflowsPage() {
                   onChange={(e) =>
                     updateStage(index, { reviewerId: e.target.value })
                   }
-                  className="w-full rounded border border-line-strong bg-white px-3 py-2 text-sm focus:border-navy-700 focus:outline-none"
+                  className={fieldClass}
                 >
                   <option value="">Choose reviewer</option>
                   {reviewers.map((reviewer) => (
@@ -227,7 +242,7 @@ export default function WorkflowsPage() {
                   type="button"
                   onClick={() => removeStage(index)}
                   disabled={form.stages.length === 1}
-                  className="text-sm text-red-700 hover:underline disabled:opacity-40"
+                  className="text-sm font-medium text-red-700 hover:underline disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   Remove
                 </button>
@@ -239,24 +254,16 @@ export default function WorkflowsPage() {
             type="button"
             onClick={addStage}
             disabled={form.stages.length >= 10}
-            className="mt-3 text-sm text-navy-700 hover:underline disabled:opacity-40"
+            className="mt-3 text-sm font-medium text-accent hover:underline disabled:opacity-40"
           >
-            Add stage
+            + Add stage
           </button>
 
-          <div className="mt-6 flex gap-2">
-            <button
-              type="submit"
-              disabled={saving}
-              className="rounded bg-navy-700 px-4 py-2 text-sm font-medium text-white hover:bg-navy-900 disabled:opacity-60"
-            >
+          <div className="mt-6 flex gap-2 border-t border-line pt-5">
+            <button type="submit" disabled={saving} className={btnPrimary}>
               {saving ? "Creating..." : "Create workflow"}
             </button>
-            <button
-              type="button"
-              onClick={closeForm}
-              className="rounded border border-line-strong bg-white px-4 py-2 text-sm hover:bg-gray-50"
-            >
+            <button type="button" onClick={closeForm} className={btnSecondary}>
               Cancel
             </button>
           </div>
@@ -264,90 +271,93 @@ export default function WorkflowsPage() {
       )}
 
       {error && (
-        <p className="mt-4 rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+        <p className="mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
           {error}
         </p>
       )}
 
-      <div className="mt-4 overflow-x-auto rounded border border-gray-200 bg-white">
-        <table className="w-full min-w-[640px] text-left text-sm">
-          <thead className="border-b border-gray-200 bg-gray-50 text-xs uppercase text-gray-500">
-            <tr>
-              <th className="px-4 py-2">Workflow</th>
-              <th className="px-4 py-2">Category</th>
-              <th className="px-4 py-2">Stages</th>
-              <th className="px-4 py-2">Status</th>
-              <th className="px-4 py-2"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading && (
-              <tr>
-                <td colSpan={5} className="px-4 py-6 text-center text-gray-500">
-                  Loading...
-                </td>
-              </tr>
-            )}
+      {loading && <p className="mt-5 text-sm text-muted">Loading...</p>}
 
-            {!loading && workflows.length === 0 && (
-              <tr>
-                <td colSpan={5} className="px-4 py-6 text-center text-gray-500">
-                  No workflows yet.
-                </td>
-              </tr>
-            )}
+      {!loading && workflows.length === 0 && (
+        <p className="mt-5 rounded-[14px] border border-line bg-white px-5 py-10 text-center text-sm text-muted">
+          No workflows yet.
+        </p>
+      )}
 
-            {!loading &&
-              workflows.map((workflow) => (
-                <tr
-                  key={workflow.id}
-                  className={`border-b border-gray-100 align-top last:border-0 ${
-                    workflow.is_active ? "" : "text-gray-500"
-                  }`}
-                >
-                  <td className="px-4 py-2">
-                    <p className="font-medium">{workflow.name}</p>
-                    {workflow.description && (
-                      <p className="text-xs text-gray-500">
-                        {workflow.description}
-                      </p>
-                    )}
-                  </td>
-                  <td className="px-4 py-2">{workflow.category}</td>
-                  <td className="px-4 py-2">
-                    <ol className="space-y-0.5">
-                      {workflow.stages.map((stage) => (
-                        <li key={stage.id}>
-                          {stage.stage_order}. {stage.stage_name} (
-                          {stage.reviewer_name})
-                        </li>
-                      ))}
-                    </ol>
-                  </td>
-                  <td className="px-4 py-2">
+      <div className="mt-5 space-y-3">
+        {!loading &&
+          shown.map((workflow) => (
+            <section
+              key={workflow.id}
+              className={`rounded-[14px] border border-line bg-white p-5 ${
+                workflow.is_active ? "" : "opacity-75"
+              }`}
+            >
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2.5">
+                    <h2 className="text-[15px] font-semibold">
+                      {workflow.name}
+                    </h2>
                     <span
-                      className={`rounded px-2 py-0.5 text-xs font-medium ${
+                      className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
                         workflow.is_active
-                          ? "bg-green-100 text-green-800"
-                          : "bg-gray-100 text-gray-600"
+                          ? "bg-[#d9f2e3] text-[#11613a]"
+                          : "bg-[#eceef2] text-[#454d5c]"
                       }`}
                     >
                       {workflow.is_active ? "Active" : "Inactive"}
                     </span>
-                  </td>
-                  <td className="px-4 py-2 text-right">
-                    <button
-                      onClick={() => toggleActive(workflow)}
-                      className="text-sm text-navy-700 hover:underline"
-                    >
-                      {workflow.is_active ? "Deactivate" : "Activate"}
-                    </button>
-                  </td>
-                </tr>
-              ))}
-          </tbody>
-        </table>
+                  </div>
+                  <p className="mt-0.5 text-xs text-muted">
+                    {workflow.category}
+                    {workflow.description && ` \u00b7 ${workflow.description}`}
+                  </p>
+                </div>
+                <button
+                  onClick={() => toggleActive(workflow)}
+                  className="text-sm font-medium text-accent hover:underline"
+                >
+                  {workflow.is_active ? "Deactivate" : "Activate"}
+                </button>
+              </div>
+
+              <ol className="mt-4 flex flex-wrap items-center gap-y-2">
+                {workflow.stages.map((stage, index) => (
+                  <li key={stage.id} className="flex items-center">
+                    <span className="rounded-lg bg-page px-3 py-2 text-sm">
+                      <span className="font-semibold">
+                        {stage.stage_order}. {stage.stage_name}
+                      </span>
+                      <span className="block text-xs text-muted">
+                        {stage.reviewer_name}
+                      </span>
+                    </span>
+                    {index < workflow.stages.length - 1 && (
+                      <span className="px-2 text-muted" aria-hidden="true">
+                        &rsaquo;
+                      </span>
+                    )}
+                  </li>
+                ))}
+              </ol>
+            </section>
+          ))}
       </div>
+
+      {!loading && workflows.length > visible && (
+        <div className="mt-3 flex items-center gap-4">
+          <button
+            onClick={() => setVisible((n) => n + PAGE_SIZE)}
+            className={btnSecondary}
+          >
+            Show more
+          </button>
+          <p className="text-xs text-muted">
+            Showing {shown.length} of {workflows.length}
+          </p>
+        </div>
+      )}
     </div>
   );
 }

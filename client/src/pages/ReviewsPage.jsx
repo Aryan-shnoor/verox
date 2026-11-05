@@ -1,15 +1,35 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { getPendingReviews, getReviewHistory } from "../api.js";
 import { formatDate, formatDateTime } from "../format.js";
+import { btnSecondary } from "../ui.js";
 import StatusBadge from "../components/StatusBadge.jsx";
+import DecisionPanel from "../components/DecisionPanel.jsx";
+
+const HISTORY_PAGE = 8;
+
+function Chip({ className, children }) {
+  return (
+    <span
+      className={`inline-block whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-semibold ${className}`}
+    >
+      {children}
+    </span>
+  );
+}
+
+const neutral = "bg-[#eceef2] text-[#454d5c]";
 
 export default function ReviewsPage() {
   const [tab, setTab] = useState("pending");
   const [pending, setPending] = useState([]);
   const [history, setHistory] = useState([]);
+  const [selectedId, setSelectedId] = useState(null);
+  const [historyShown, setHistoryShown] = useState(HISTORY_PAGE);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [reloadKey, setReloadKey] = useState(0);
+  const panelRef = useRef(null);
 
   useEffect(() => {
     let ignore = false;
@@ -19,6 +39,7 @@ export default function ReviewsPage() {
         if (ignore) return;
         setPending(pendingList);
         setHistory(historyList);
+        setError("");
       })
       .catch((err) => {
         if (!ignore) setError(err.message);
@@ -30,24 +51,36 @@ export default function ReviewsPage() {
     return () => {
       ignore = true;
     };
-  }, []);
+  }, [reloadKey]);
+
+  const selected =
+    pending.find((item) => item.document_id === selectedId) ??
+    pending[0] ??
+    null;
+
+  function select(id) {
+    setSelectedId(id);
+    if (window.innerWidth < 1024) {
+      panelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }
 
   function tabClass(name) {
-    return `border-b-2 px-3 py-2 text-sm font-medium ${
+    return `-mb-px border-b-2 px-1 pb-3 text-sm font-medium ${
       tab === name
-        ? "border-navy-700 text-navy-900"
-        : "border-transparent text-gray-500 hover:text-gray-700"
+        ? "border-accent text-ink"
+        : "border-transparent text-muted hover:text-ink"
     }`;
   }
 
-  const headClass =
-    "border-b border-gray-200 bg-gray-50 text-xs uppercase text-gray-500";
-
   return (
-    <div className="max-w-6xl">
-      <h1 className="text-xl font-semibold text-navy-900">My Reviews</h1>
+    <div>
+      <h1 className="text-2xl font-bold tracking-tight">My Reviews</h1>
+      <p className="mt-1 text-sm text-muted">
+        Review each document without leaving the page.
+      </p>
 
-      <div className="mt-4 flex gap-2 border-b border-gray-200">
+      <div className="mt-5 flex gap-6 border-b border-line">
         <button
           onClick={() => setTab("pending")}
           className={tabClass("pending")}
@@ -63,120 +96,159 @@ export default function ReviewsPage() {
       </div>
 
       {error && (
-        <p className="mt-4 rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+        <p className="mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
           {error}
         </p>
       )}
 
-      <div className="mt-4 overflow-x-auto rounded border border-gray-200 bg-white">
-        {loading && (
-          <p className="px-4 py-6 text-center text-sm text-gray-500">
-            Loading...
-          </p>
-        )}
+      {loading && <p className="mt-4 text-sm text-muted">Loading...</p>}
 
-        {!loading && tab === "pending" && (
-          <table className="w-full min-w-[720px] text-left text-sm">
-            <thead className={headClass}>
-              <tr>
-                <th className="px-4 py-2">Title</th>
-                <th className="px-4 py-2">Category</th>
-                <th className="px-4 py-2">Owner</th>
-                <th className="px-4 py-2">Stage</th>
-                <th className="px-4 py-2">Attempt</th>
-                <th className="px-4 py-2">Submitted</th>
-                <th className="px-4 py-2"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {pending.length === 0 && (
-                <tr>
-                  <td
-                    colSpan={7}
-                    className="px-4 py-6 text-center text-gray-500"
-                  >
-                    Nothing is waiting for your decision.
-                  </td>
-                </tr>
-              )}
-              {pending.map((item) => (
-                <tr
-                  key={item.document_id}
-                  className="border-b border-gray-100 last:border-0"
-                >
-                  <td className="px-4 py-2 font-medium">{item.title}</td>
-                  <td className="px-4 py-2">{item.category}</td>
-                  <td className="px-4 py-2">{item.owner_name}</td>
-                  <td className="px-4 py-2">{item.stage_name}</td>
-                  <td className="px-4 py-2">{item.attempt_number}</td>
-                  <td className="px-4 py-2">{formatDate(item.started_at)}</td>
-                  <td className="px-4 py-2 text-right">
-                    <Link
-                      to={`/documents/${item.document_id}`}
-                      className="rounded bg-navy-700 px-3 py-1.5 text-xs font-medium text-white hover:bg-navy-900"
-                    >
-                      Review
-                    </Link>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
+      {!loading && tab === "pending" && pending.length === 0 && (
+        <p className="mt-4 rounded-[14px] border border-line bg-white px-5 py-10 text-center text-sm text-muted">
+          Nothing is waiting for your decision.
+        </p>
+      )}
 
-        {!loading && tab === "history" && (
-          <table className="w-full min-w-[720px] text-left text-sm">
-            <thead className={headClass}>
-              <tr>
-                <th className="px-4 py-2">Document</th>
-                <th className="px-4 py-2">Decision</th>
-                <th className="px-4 py-2">Stage</th>
-                <th className="px-4 py-2">Comment</th>
-                <th className="px-4 py-2">Date</th>
-              </tr>
-            </thead>
-            <tbody>
-              {history.length === 0 && (
-                <tr>
-                  <td
-                    colSpan={5}
-                    className="px-4 py-6 text-center text-gray-500"
+      {!loading && tab === "pending" && selected && (
+        <div className="mt-4 grid items-start gap-4 lg:grid-cols-[340px_minmax(0,1fr)]">
+          <ul className="space-y-2">
+            {pending.map((item) => {
+              const active = item.document_id === selected.document_id;
+              return (
+                <li key={item.document_id}>
+                  <button
+                    onClick={() => select(item.document_id)}
+                    className={`block w-full rounded-xl border bg-white px-4 py-3 text-left ${
+                      active
+                        ? "border-accent ring-1 ring-accent"
+                        : "border-line hover:border-line-strong"
+                    }`}
                   >
-                    You haven't made any decisions yet.
-                  </td>
-                </tr>
-              )}
-              {history.map((item) => (
-                <tr
-                  key={item.id}
-                  className="border-b border-gray-100 align-top last:border-0"
-                >
-                  <td className="px-4 py-2">
-                    <Link
-                      to={`/documents/${item.document_id}`}
-                      className="font-medium text-navy-700 hover:underline"
-                    >
+                    <span className="block truncate text-sm font-semibold">
                       {item.title}
-                    </Link>
-                  </td>
-                  <td className="px-4 py-2">
-                    <StatusBadge status={item.action} />
-                  </td>
-                  <td className="px-4 py-2 whitespace-nowrap">
-                    Stage {item.stage_order}, attempt {item.attempt_number}
-                  </td>
-                  <td className="max-w-xs whitespace-pre-wrap px-4 py-2 text-gray-700">
-                    {item.comment || "-"}
-                  </td>
-                  <td className="px-4 py-2 whitespace-nowrap">
-                    {formatDateTime(item.created_at)}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
+                    </span>
+                    <span className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1">
+                      <Chip className={neutral}>{item.category}</Chip>
+                      <span className="text-xs text-muted">
+                        {item.owner_name}, {formatDate(item.started_at)}
+                      </span>
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+
+          <section
+            ref={panelRef}
+            className="scroll-mt-4 rounded-[14px] border border-line bg-white p-5 md:p-6"
+          >
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="min-w-0">
+                <h2 className="text-xl font-bold tracking-tight">
+                  {selected.title}
+                </h2>
+                <div className="mt-2">
+                  <Chip className={neutral}>{selected.category}</Chip>
+                </div>
+              </div>
+              <Chip className="bg-accent-soft text-accent">
+                {selected.stage_name}
+              </Chip>
+            </div>
+
+            <dl className="mt-5 grid grid-cols-2 gap-4 text-sm">
+              <div>
+                <dt className="text-xs text-muted">Owner</dt>
+                <dd className="mt-0.5 font-semibold">{selected.owner_name}</dd>
+              </div>
+              <div>
+                <dt className="text-xs text-muted">Submitted</dt>
+                <dd className="mt-0.5 font-semibold">
+                  {formatDate(selected.started_at)}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-xs text-muted">Stage</dt>
+                <dd className="mt-0.5 font-semibold">{selected.stage_name}</dd>
+              </div>
+              <div>
+                <dt className="text-xs text-muted">Attempt</dt>
+                <dd className="mt-0.5 font-semibold">
+                  {selected.attempt_number}
+                  {selected.attempt_number > 1 && (
+                    <span className="font-normal text-muted">
+                      {" "}
+                      (resubmitted)
+                    </span>
+                  )}
+                </dd>
+              </div>
+            </dl>
+
+            <Link
+              to={`/documents/${selected.document_id}`}
+              className="mt-4 inline-block text-sm font-medium text-accent hover:underline"
+            >
+              Open the document, files and history
+            </Link>
+
+            <div className="mt-5 border-t border-line pt-5">
+              <DecisionPanel
+                key={selected.document_id}
+                documentId={selected.document_id}
+                onDone={() => setReloadKey((key) => key + 1)}
+              />
+            </div>
+          </section>
+        </div>
+      )}
+
+      {!loading && tab === "history" && (
+        <div className="mt-4">
+          <div className="rounded-[14px] border border-line bg-white">
+            {history.length === 0 ? (
+              <p className="px-5 py-10 text-center text-sm text-muted">
+                You haven't made any decisions yet.
+              </p>
+            ) : (
+              <ul className="divide-y divide-line">
+                {history.slice(0, historyShown).map((item) => (
+                  <li key={item.id} className="px-5 py-4">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <Link
+                        to={`/documents/${item.document_id}`}
+                        className="font-semibold hover:text-accent"
+                      >
+                        {item.title}
+                      </Link>
+                      <StatusBadge status={item.action} />
+                    </div>
+                    <p className="mt-0.5 text-xs text-muted">
+                      Stage {item.stage_order}, attempt {item.attempt_number}{" "}
+                      &middot; {formatDateTime(item.created_at)}
+                    </p>
+                    {item.comment && (
+                      <p className="mt-2 whitespace-pre-wrap rounded-lg bg-page px-3 py-2 text-sm">
+                        {item.comment}
+                      </p>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+
+          {history.length > historyShown && (
+            <button
+              onClick={() => setHistoryShown((n) => n + HISTORY_PAGE)}
+              className={`${btnSecondary} mt-3`}
+            >
+              Show more
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 }
